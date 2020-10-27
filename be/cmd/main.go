@@ -67,5 +67,5 @@ func main() {
 	if err != nil {
 		log.Error("start all alerts error", "err", err.Error())
 	}
-	routers.Route(cfg.Host, cfg.Port, handler)
+	routers.Route(cfg.Host, cfg.Port, handler, "alert")
 }

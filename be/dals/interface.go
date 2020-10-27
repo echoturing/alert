@@ -20,6 +20,9 @@ type Interface interface {
 	GetAlertByID(ctx context.Context, id int64) (*ent.Alert, error)
 
 	GetChannelByID(ctx context.Context, id int64) (*ent.Channel, error)
+	ListChannels(ctx context.Context) ([]*ent.Channel, error)
+	UpdateChannel(ctx context.Context, id int64, channel *ent.Channel) (*ent.Channel, error)
+	CreateChannel(ctx context.Context, channel *ent.Channel) (*ent.Channel, error)
 }
 
 type impl struct {

@@ -1,23 +1,23 @@
 package handlers
 
 import (
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo"
 
 	"github.com/echoturing/alert/services"
 )
 
 type Interface interface {
-	ListAlerts(context echo.Context) error
-	CreateAlert(context echo.Context) error
-	UpdateAlert(context echo.Context) error
+	ListAlerts(context echo.Context) (interface{}, error)
+	CreateAlert(context echo.Context) (interface{}, error)
+	UpdateAlert(context echo.Context) (interface{}, error)
 
-	ListDatasource(context echo.Context) error
-	CreateDatasource(context echo.Context) error
-	UpdateDatasource(context echo.Context) error
+	ListDatasource(context echo.Context) (interface{}, error)
+	CreateDatasource(context echo.Context) (interface{}, error)
+	UpdateDatasource(context echo.Context) (interface{}, error)
 
-	ListChannels(context echo.Context) error
-	CreateChannel(context echo.Context) error
-	UpdateChannel(context echo.Context) error
+	ListChannels(context echo.Context) (interface{}, error)
+	CreateChannel(context echo.Context) (interface{}, error)
+	UpdateChannel(context echo.Context) (interface{}, error)
 }
 
 type impl struct {

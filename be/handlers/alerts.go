@@ -3,7 +3,7 @@ package handlers
 import (
 	"strconv"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo"
 
 	"github.com/echoturing/alert/ent"
 	"github.com/echoturing/alert/ent/schema"
@@ -16,22 +16,22 @@ type CreateAlertRequest struct {
 	Rule    *schema.Rule `json:"rule"`
 }
 
-func (i *impl) CreateAlert(c echo.Context) error {
+func (i *impl) CreateAlert(c echo.Context) (interface{}, error) {
 	ctx := c.Request().Context()
 	req := &CreateAlertRequest{}
 	if err := c.Bind(req); err != nil {
-		return err
+		return nil, err
 	}
-	_, err := i.service.CreateAlert(ctx, &ent.Alert{
+	alert, err := i.service.CreateAlert(ctx, &ent.Alert{
 		Name:     req.Name,
 		Channels: req.Channel,
 		Rule:     *req.Rule,
 		Status:   schema.AlertStatus(1),
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return alert, nil
 }
 
 type ListAlertsRequest struct {
@@ -40,44 +40,41 @@ type ListAlertsRequest struct {
 }
 
 type ListAlertsReply struct {
-	Code    int          `json:"code"`
-	List    []*ent.Alert `json:"list"`
-	Message string       `json:"message"`
+	List []*ent.Alert `json:"list"`
 }
 
-func (i *impl) ListAlerts(c echo.Context) error {
+func (i *impl) ListAlerts(c echo.Context) (interface{}, error) {
 	ctx := c.Request().Context()
 	req := ListAlertsRequest{}
 
 	if err := c.Bind(&req); err != nil {
-		return err
+		return nil, err
 	}
 
 	alertList, err := i.service.ListAlerts(ctx, req.Status, req.AlertStatus)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	resp := &ListAlertsReply{
-		Code: 0,
 		List: alertList,
 	}
-	return c.JSON(200, resp)
+	return resp, nil
 }
 
-func (i *impl) UpdateAlert(c echo.Context) error {
+func (i *impl) UpdateAlert(c echo.Context) (interface{}, error) {
 	ctx := c.Request().Context()
 	req := &services.UpdateAlertRequest{}
 	if err := c.Bind(req); err != nil {
-		return err
+		return nil, err
 	}
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 0, 64)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	_, err = i.service.UpdateAlert(ctx, id, req)
+	alert, err := i.service.UpdateAlert(ctx, id, req)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return alert, nil
 }

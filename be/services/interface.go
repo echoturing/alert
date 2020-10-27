@@ -15,6 +15,10 @@ type Interface interface {
 	ListAlerts(ctx context.Context, status schema.AlertStatus, alertStatus schema.AlertState) ([]*ent.Alert, error)
 	UpdateAlert(ctx context.Context, id int64, update *UpdateAlertRequest) (*ent.Alert, error)
 
+	ListChannels(ctx context.Context) ([]*ent.Channel, error)
+	CreateChannel(ctx context.Context, channel *ent.Channel) (*ent.Channel, error)
+	UpdateChannel(ctx context.Context, id int64, update *UpdateChannelRequest) (*ent.Channel, error)
+
 	CreateDatasource(ctx context.Context, datasource *ent.Datasource) (*ent.Datasource, error)
 	ListDatasource(ctx context.Context) ([]*ent.Datasource, error)
 	UpdateDatasource(ctx context.Context, id int64, update *UpdateDatasourceRequest) (*ent.Datasource, error)
