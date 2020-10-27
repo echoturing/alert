@@ -11,52 +11,59 @@ import (
 	"github.com/echoturing/log"
 	"github.com/labstack/echo/v4"
 
-	"github.com/echoturing/alert/alerts"
-	"github.com/echoturing/alert/alerts/rules"
-	"github.com/echoturing/alert/channels"
-	"github.com/echoturing/alert/dals"
+	"github.com/echoturing/alert/ent"
+	"github.com/echoturing/alert/ent/schema"
 )
 
-func (i *impl) CreateAlert(ctx context.Context, alert *alerts.Alert) (*alerts.Alert, error) {
-	// TODO:
-	return i.dal.CreateAlert(ctx, alert)
+func (i *impl) CreateAlert(ctx context.Context, alert *ent.Alert) (*ent.Alert, error) {
+	// TODO:validate data field
+	alert, err := i.dal.CreateAlert(ctx, alert)
+	if err != nil {
+		return nil, err
+	}
+	err = i.StartAlert(ctx, alert)
+	if err != nil {
+		log.ErrorWithContext(ctx, "start alert error", "err", err.Error())
+		// just log an error,do not return
+	}
+	return alert, nil
 }
 
-func (i *impl) ListAlerts(ctx context.Context, status alerts.Status, alertStatus alerts.AlertStatus) ([]*alerts.Alert, error) {
+func (i *impl) ListAlerts(ctx context.Context, status schema.AlertStatus, alertStatus schema.AlertState) ([]*ent.Alert, error) {
 	return i.dal.ListAlerts(ctx, status, alertStatus)
 }
 
 type UpdateAlertRequest struct {
-	Name     string        `json:"name"`
-	Channels []int64       `json:"channels"`
-	Rule     *rules.Rule   `json:"rule"`
-	Status   alerts.Status `json:"status"`
+	Name     string             `json:"name"`
+	Channels []int64            `json:"channels"`
+	Rule     *schema.Rule       `json:"rule"`
+	Status   schema.AlertStatus `json:"status"`
 }
 
-func (i *impl) UpdateAlert(ctx context.Context, id int64, update *UpdateAlertRequest) (int64, error) {
-	count, err := i.dal.UpdateAlert(ctx, id, map[string]interface{}{
-		dals.AlertColumnName:     update.Name,
-		dals.AlertColumnChannels: update.Channels,
-		dals.AlertColumnRule:     update.Rule,
-		dals.AlertColumnStatus:   update.Status,
+func (i *impl) UpdateAlert(ctx context.Context, id int64, update *UpdateAlertRequest) (*ent.Alert, error) {
+	count, err := i.dal.UpdateAlert(ctx, id, &ent.Alert{
+		Name:     update.Name,
+		Channels: update.Channels,
+		Rule:     *update.Rule,
+		Status:   update.Status,
 	})
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	alert, err := i.dal.GetAlertByID(ctx, id)
 	if err != nil {
-		return 0, fmt.Errorf("get alert by id err:%w", err)
+		return nil, fmt.Errorf("get alert by id err:%w", err)
 	}
 	switch update.Status {
-	case alerts.StatusOpen:
+	case schema.StatusOpen:
 		err = i.StartAlert(ctx, alert)
 		if err != nil {
-			return 0, fmt.Errorf("start alert error:%w", err)
+			return nil, fmt.Errorf("start alert error:%w", err)
 		}
-	case alerts.StatusClose:
-		err = i.StopAlert(ctx, alert)
+	case schema.StatusClose:
+		err = i.stopAlert(ctx, alert)
 		if err != nil {
-			return 0, fmt.Errorf("stop alert error:%w", err)
+			return nil, fmt.Errorf("stop alert error:%w", err)
 		}
 	}
 	return count, nil
@@ -65,7 +72,7 @@ func (i *impl) UpdateAlert(ctx context.Context, id int64, update *UpdateAlertReq
 func (i *impl) StartAllAlert(ctx context.Context) error {
 	// get all online alerts
 	// start one
-	als, err := i.dal.ListAlerts(ctx, alerts.StatusOpen, 0)
+	als, err := i.dal.ListAlerts(ctx, schema.StatusOpen, 0)
 	if err != nil {
 		return err
 	}
@@ -78,7 +85,66 @@ func (i *impl) StartAllAlert(ctx context.Context) error {
 	return nil
 }
 
-func (i *impl) StartAlert(ctx context.Context, alert *alerts.Alert) error {
+func (i *impl) evaluatesRule(ctx context.Context, rule schema.Rule) (*schema.RuleResult, error) {
+	var final schema.RuleResult
+	for _, condition := range rule.Conditions {
+		conditionResults, err := i.evaluatesCondition(ctx, condition.Condition)
+		if err != nil {
+			return nil, err
+		}
+		ruleResult := mergeConditionResultToRuleResult(ctx, conditionResults)
+		switch condition.Type {
+		default:
+			log.ErrorWithContext(ctx, "unknown condition type", "condition", condition)
+		case schema.ConditionRelationTypeOr, schema.ConditionRelationTypeUndefined:
+			final.Qualified = final.Qualified || ruleResult.Qualified
+		case schema.ConditionRelationTypeAnd:
+			final.Qualified = final.Qualified && ruleResult.Qualified
+		}
+		final.Detail = append(final.Detail, ruleResult.Detail...)
+	}
+	return &final, nil
+}
+
+func (i *impl) evaluatesCondition(ctx context.Context, condition *schema.Condition) ([]*schema.ConditionResult, error) {
+	// get datasource
+	datasource, err := i.dal.GetDatasourceByID(ctx, condition.DatasourceID)
+	if err != nil {
+		return nil, err
+	}
+	datasourceResults, err := i.evaluatesDatasource(ctx, datasource, condition.Script)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]*schema.ConditionResult, 0, len(datasourceResults))
+	for _, dr := range datasourceResults {
+		results = append(results, &schema.ConditionResult{
+			Name:      dr.Name,
+			Value:     dr.Value,
+			Valid:     condition.Benchmark.Valid(dr.Value),
+			Condition: condition,
+		})
+
+	}
+	return results, nil
+}
+
+func mergeConditionResultToRuleResult(tx context.Context, results []*schema.ConditionResult) *schema.RuleResult {
+	rr := &schema.RuleResult{
+		Qualified: true,
+		Detail:    make([]string, 0),
+	}
+	for _, result := range results {
+		if !result.Valid {
+			rr.Qualified = false
+			rr.Detail = append(rr.Detail, result.String())
+		}
+	}
+	return rr
+}
+
+func (i *impl) StartAlert(ctx context.Context, alert *ent.Alert) error {
 	i.mutex.Lock()
 	defer i.mutex.Unlock()
 	if _, ok := i.alerts[alert.ID]; ok {
@@ -91,7 +157,7 @@ func (i *impl) StartAlert(ctx context.Context, alert *alerts.Alert) error {
 		for {
 			ctx := log.NewDefaultContext()
 			for range ticker.C {
-				ruleResult, err := alert.Rule.Evaluates(ctx, i.dal.GetDatasourceByID)
+				ruleResult, err := i.evaluatesRule(ctx, alert.Rule)
 				if err != nil {
 					log.ErrorWithContext(ctx, "evaluate error", "err", err.Error())
 					continue
@@ -112,7 +178,8 @@ func (i *impl) StartAlert(ctx context.Context, alert *alerts.Alert) error {
 							continue
 						}
 					}
-					_, err = i.dal.UpdateAlert(ctx, alert.ID, map[string]interface{}{dals.AlertColumnAlertStatus: ruleResultToAlertStatus(ruleResult)})
+					alert.State = ruleResultToAlertState(ruleResult)
+					_, err = i.dal.UpdateAlert(ctx, alert.ID, alert)
 					if err != nil {
 						log.ErrorWithContext(ctx, "update alert error", "err", err.Error())
 						continue
@@ -123,19 +190,20 @@ func (i *impl) StartAlert(ctx context.Context, alert *alerts.Alert) error {
 	}()
 	return nil
 }
-func ruleResultToAlertStatus(result *rules.RuleResult) alerts.AlertStatus {
+
+func ruleResultToAlertState(result *schema.RuleResult) schema.AlertState {
 	switch result.Qualified {
 	default:
 		// TODO: status may be pending...but now just has two status
-		return alerts.AlertStatusOK
+		return schema.AlertStateOK
 	case true:
-		return alerts.AlertStatusOK
+		return schema.AlertStateOK
 	case false:
-		return alerts.AlertStatusAlerting
+		return schema.AlertStateAlerting
 	}
 }
 
-func (i *impl) StopAlert(ctx context.Context, alert *alerts.Alert) error {
+func (i *impl) stopAlert(ctx context.Context, alert *ent.Alert) error {
 	i.mutex.Lock()
 	defer i.mutex.Unlock()
 	if ticker, ok := i.alerts[alert.ID]; ok {
@@ -145,16 +213,16 @@ func (i *impl) StopAlert(ctx context.Context, alert *alerts.Alert) error {
 	return nil
 }
 
-func (i *impl) sendAlert(ctx context.Context, alert *alerts.Alert, channel *channels.Channel, result *rules.RuleResult) error {
+func (i *impl) sendAlert(ctx context.Context, alert *ent.Alert, channel *ent.Channel, result *schema.RuleResult) error {
 	switch channel.Type {
 	default:
 		return fmt.Errorf("unknown channel type")
-	case channels.ChannelTypeWebhook:
+	case schema.ChannelTypeWebhook:
 		return i.sendWebhookAlert(ctx, alert, channel.Detail.Webhook, result)
 	}
 }
 
-func (i *impl) sendWebhookAlert(ctx context.Context, alert *alerts.Alert, webhook *channels.Webhook, result *rules.RuleResult) error {
+func (i *impl) sendWebhookAlert(ctx context.Context, alert *ent.Alert, webhook *schema.Webhook, result *schema.RuleResult) error {
 	postData := map[string]string{
 		"msg":         result.String(),
 		"alert title": alert.Name,

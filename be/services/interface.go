@@ -5,19 +5,19 @@ import (
 	"sync"
 	"time"
 
-	"github.com/echoturing/alert/alerts"
 	"github.com/echoturing/alert/dals"
-	"github.com/echoturing/alert/datasources"
+	"github.com/echoturing/alert/ent"
+	"github.com/echoturing/alert/ent/schema"
 )
 
 type Interface interface {
-	CreateAlert(ctx context.Context, alert *alerts.Alert) (*alerts.Alert, error)
-	ListAlerts(ctx context.Context, status alerts.Status, alertStatus alerts.AlertStatus) ([]*alerts.Alert, error)
-	UpdateAlert(ctx context.Context, id int64, update *UpdateAlertRequest) (int64, error)
+	CreateAlert(ctx context.Context, alert *ent.Alert) (*ent.Alert, error)
+	ListAlerts(ctx context.Context, status schema.AlertStatus, alertStatus schema.AlertState) ([]*ent.Alert, error)
+	UpdateAlert(ctx context.Context, id int64, update *UpdateAlertRequest) (*ent.Alert, error)
 
-	CreateDatasource(ctx context.Context, datasource *datasources.Datasource) (*datasources.Datasource, error)
-	ListDatasource(ctx context.Context) ([]*datasources.Datasource, error)
-	UpdateDatasource(ctx context.Context, id int64, update *UpdateDatasourceRequest) (int64, error)
+	CreateDatasource(ctx context.Context, datasource *ent.Datasource) (*ent.Datasource, error)
+	ListDatasource(ctx context.Context) ([]*ent.Datasource, error)
+	UpdateDatasource(ctx context.Context, id int64, update *UpdateDatasourceRequest) (*ent.Datasource, error)
 	StartAllAlert(ctx context.Context) error
 }
 

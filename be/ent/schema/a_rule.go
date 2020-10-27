@@ -1,15 +1,10 @@
-package rules
+package schema
 
 import (
-	"context"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	"github.com/echoturing/log"
-
-	"github.com/echoturing/alert/alerts/conditions"
 )
 
 type Rule struct {
@@ -54,7 +49,7 @@ const (
 
 type ConditionRelation struct {
 	Type      ConditionRelationType `json:"type"`
-	Condition conditions.Condition  `json:"condition"`
+	Condition *Condition            `json:"condition"`
 }
 
 func (a ConditionRelation) Value() (driver.Value, error) {
@@ -72,41 +67,4 @@ func (rr *RuleResult) String() string {
 		res += line + ";\n"
 	}
 	return res
-}
-
-// Evaluates evaluate every condition in sequence
-// merge all condition result into a summary
-func (r *Rule) Evaluates(ctx context.Context, datasourceGetter conditions.DatasourceGetter) (*RuleResult, error) {
-	var final RuleResult
-	for _, condition := range r.Conditions {
-		conditionResults, err := condition.Condition.Evaluates(ctx, datasourceGetter)
-		if err != nil {
-			return nil, err
-		}
-		ruleResult := mergeToRuleResult(ctx, conditionResults)
-		switch condition.Type {
-		default:
-			log.ErrorWithContext(ctx, "unknown condition type", "condition", condition)
-		case ConditionRelationTypeOr, ConditionRelationTypeUndefined:
-			final.Qualified = final.Qualified || ruleResult.Qualified
-		case ConditionRelationTypeAnd:
-			final.Qualified = final.Qualified && ruleResult.Qualified
-		}
-		final.Detail = append(final.Detail, ruleResult.Detail...)
-	}
-	return &final, nil
-}
-
-func mergeToRuleResult(tx context.Context, results []*conditions.Result) *RuleResult {
-	rr := &RuleResult{
-		Qualified: true,
-		Detail:    make([]string, 0),
-	}
-	for _, result := range results {
-		if !result.Valid {
-			rr.Qualified = false
-			rr.Detail = append(rr.Detail, result.String())
-		}
-	}
-	return rr
 }

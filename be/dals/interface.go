@@ -4,31 +4,31 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/echoturing/alert/alerts"
-	"github.com/echoturing/alert/channels"
-	"github.com/echoturing/alert/datasources"
+	"github.com/echoturing/alert/ent"
+	"github.com/echoturing/alert/ent/schema"
 )
 
 type Interface interface {
-	CreateDatasource(ctx context.Context, datasource *datasources.Datasource) (*datasources.Datasource, error)
-	GetDatasourceByID(ctx context.Context, id int64) (*datasources.Datasource, error)
-	ListDatasource(ctx context.Context) ([]*datasources.Datasource, error)
-	UpdateDatasource(ctx context.Context, id int64, kvs map[string]interface{}) (int64, error)
+	CreateDatasource(ctx context.Context, datasource *ent.Datasource) (*ent.Datasource, error)
+	GetDatasourceByID(ctx context.Context, id int64) (*ent.Datasource, error)
+	ListDatasource(ctx context.Context) ([]*ent.Datasource, error)
+	UpdateDatasource(ctx context.Context, id int64, datasource *ent.Datasource) (*ent.Datasource, error)
 
-	ListAlerts(ctx context.Context, status alerts.Status, alertStatus alerts.AlertStatus) ([]*alerts.Alert, error)
-	CreateAlert(ctx context.Context, alert *alerts.Alert) (*alerts.Alert, error)
-	UpdateAlert(ctx context.Context, id int64, kvs map[string]interface{}) (int64, error)
-	GetAlertByID(ctx context.Context, id int64) (*alerts.Alert, error)
+	ListAlerts(ctx context.Context, status schema.AlertStatus, alertStatus schema.AlertState) ([]*ent.Alert, error)
+	CreateAlert(ctx context.Context, alert *ent.Alert) (*ent.Alert, error)
+	UpdateAlert(ctx context.Context, id int64, alert *ent.Alert) (*ent.Alert, error)
+	GetAlertByID(ctx context.Context, id int64) (*ent.Alert, error)
 
-	GetChannelByID(ctx context.Context, id int64) (*channels.Channel, error)
+	GetChannelByID(ctx context.Context, id int64) (*ent.Channel, error)
 }
 
 type impl struct {
-	db *sql.DB
+	db     *sql.DB
+	client *ent.Client
 }
 
 var _ Interface = (*impl)(nil)
 
-func NewDALInterface(db *sql.DB) Interface {
-	return &impl{db: db}
+func NewDALInterface(db *sql.DB, entClient *ent.Client) Interface {
+	return &impl{db: db, client: entClient}
 }

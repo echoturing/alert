@@ -5,15 +5,15 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/echoturing/alert/alerts"
-	"github.com/echoturing/alert/alerts/rules"
+	"github.com/echoturing/alert/ent"
+	"github.com/echoturing/alert/ent/schema"
 	"github.com/echoturing/alert/services"
 )
 
 type CreateAlertRequest struct {
-	Name    string      `json:"name"`
-	Channel []int64     `json:"channel"`
-	Rule    *rules.Rule `json:"rule"`
+	Name    string       `json:"name"`
+	Channel []int64      `json:"channel"`
+	Rule    *schema.Rule `json:"rule"`
 }
 
 func (i *impl) CreateAlert(c echo.Context) error {
@@ -22,11 +22,11 @@ func (i *impl) CreateAlert(c echo.Context) error {
 	if err := c.Bind(req); err != nil {
 		return err
 	}
-	_, err := i.service.CreateAlert(ctx, &alerts.Alert{
+	_, err := i.service.CreateAlert(ctx, &ent.Alert{
 		Name:     req.Name,
 		Channels: req.Channel,
-		Rule:     req.Rule,
-		Status:   alerts.Status(1),
+		Rule:     *req.Rule,
+		Status:   schema.AlertStatus(1),
 	})
 	if err != nil {
 		return err
@@ -35,14 +35,14 @@ func (i *impl) CreateAlert(c echo.Context) error {
 }
 
 type ListAlertsRequest struct {
-	Status      alerts.Status      `query:"status"`
-	AlertStatus alerts.AlertStatus `query:"alertStatus"`
+	Status      schema.AlertStatus `query:"status"`
+	AlertStatus schema.AlertState  `query:"alertStatus"`
 }
 
 type ListAlertsReply struct {
-	Code    int             `json:"code"`
-	List    []*alerts.Alert `json:"list"`
-	Message string          `json:"message"`
+	Code    int          `json:"code"`
+	List    []*ent.Alert `json:"list"`
+	Message string       `json:"message"`
 }
 
 func (i *impl) ListAlerts(c echo.Context) error {

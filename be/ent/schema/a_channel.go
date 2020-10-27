@@ -1,14 +1,13 @@
-package channels
+package schema
 
 import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 )
 
-type ChannelType int
+type ChannelType int8
 
 const (
 	ChannelTypeUndefined ChannelType = 0
@@ -19,24 +18,15 @@ type Webhook struct {
 	URL string `json:"url"`
 }
 
-type Channel struct {
-	ID        int64       `json:"id"`
-	Name      string      `json:"name"`
-	Type      ChannelType `json:"type"`
-	Detail    *Detail     `json:"detail"`
-	CreatedAt time.Time   `json:"createdAt"`
-	UpdatedAt time.Time   `json:"updatedAt"`
-}
-
-type Detail struct {
+type ChannelDetail struct {
 	Webhook *Webhook `json:"webhook"`
 }
 
-func (r Detail) Value() (driver.Value, error) {
+func (r ChannelDetail) Value() (driver.Value, error) {
 	return json.Marshal(r)
 }
 
-func (r *Detail) Scan(src interface{}) error {
+func (r *ChannelDetail) Scan(src interface{}) error {
 	if src == nil {
 		return nil
 	}

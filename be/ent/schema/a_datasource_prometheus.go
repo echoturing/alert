@@ -1,4 +1,4 @@
-package datasources
+package schema
 
 type PrometheusConfig struct {
 }

@@ -5,7 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/echoturing/alert/datasources"
+	"github.com/echoturing/alert/ent"
 	"github.com/echoturing/alert/services"
 )
 
@@ -13,9 +13,9 @@ type ListDatasourceRequest struct {
 }
 
 type ListDatasourceReply struct {
-	Code    int                       `json:"code"`
-	List    []*datasources.Datasource `json:"list"`
-	Message string                    `json:"message"`
+	Code    int               `json:"code"`
+	List    []*ent.Datasource `json:"list"`
+	Message string            `json:"message"`
 }
 
 func (i *impl) ListDatasource(c echo.Context) error {
@@ -33,7 +33,7 @@ func (i *impl) ListDatasource(c echo.Context) error {
 
 func (i *impl) CreateDatasource(c echo.Context) error {
 	ctx := c.Request().Context()
-	ds := &datasources.Datasource{}
+	ds := &ent.Datasource{}
 	if err := c.Bind(ds); err != nil {
 		return err
 	}

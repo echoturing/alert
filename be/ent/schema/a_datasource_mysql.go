@@ -1,4 +1,4 @@
-package datasources
+package schema
 
 import (
 	"context"
@@ -62,10 +62,15 @@ func (d *MySQLConfig) Connect(ctx context.Context) error {
 	return db.Ping()
 }
 
-func initResults(columns []string) []*Result {
-	result := make([]*Result, 0, len(columns))
+type DatasourceResult struct {
+	Name  string  `json:"name"`
+	Value float64 `json:"value"`
+}
+
+func initResults(columns []string) []*DatasourceResult {
+	result := make([]*DatasourceResult, 0, len(columns))
 	for i := 0; i < len(columns); i++ {
-		result = append(result, &Result{
+		result = append(result, &DatasourceResult{
 			Name:  columns[i],
 			Value: 0,
 		})
@@ -73,7 +78,7 @@ func initResults(columns []string) []*Result {
 	return result
 }
 
-func resultsToValueInterfacePointer(results []*Result) []interface{} {
+func resultsToValueInterfacePointer(results []*DatasourceResult) []interface{} {
 	rt := make([]interface{}, 0, len(results))
 	for _, result := range results {
 		rt = append(rt, &result.Value)
@@ -81,7 +86,7 @@ func resultsToValueInterfacePointer(results []*Result) []interface{} {
 	return rt
 }
 
-func (d *MySQLConfig) EvalScript(ctx context.Context, script string) ([]*Result, error) {
+func (d *MySQLConfig) EvalScript(ctx context.Context, script string) ([]*DatasourceResult, error) {
 	db, err := newMysqlConnection(d.User, d.Password, d.Host, d.Port, d.DBName)
 	if err != nil {
 		return nil, err
