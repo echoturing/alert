@@ -43,6 +43,8 @@ func init() {
 	datasource.DefaultCreatedAt = datasourceDescCreatedAt.Default.(func() time.Time)
 	// datasourceDescUpdatedAt is the schema descriptor for updatedAt field.
 	datasourceDescUpdatedAt := datasourceFields[5].Descriptor()
+	// datasource.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
+	datasource.DefaultUpdatedAt = datasourceDescUpdatedAt.Default.(func() time.Time)
 	// datasource.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
 	datasource.UpdateDefaultUpdatedAt = datasourceDescUpdatedAt.UpdateDefault.(func() time.Time)
 }

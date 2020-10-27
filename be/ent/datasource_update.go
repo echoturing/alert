@@ -171,6 +171,12 @@ func (du *DatasourceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: datasource.FieldDetail,
 		})
 	}
+	if du.mutation.CreatedAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: datasource.FieldCreatedAt,
+		})
+	}
 	if value, ok := du.mutation.UpdatedAt(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
@@ -334,6 +340,12 @@ func (duo *DatasourceUpdateOne) sqlSave(ctx context.Context) (_node *Datasource,
 			Type:   field.TypeString,
 			Value:  value,
 			Column: datasource.FieldDetail,
+		})
+	}
+	if duo.mutation.CreatedAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: datasource.FieldCreatedAt,
 		})
 	}
 	if value, ok := duo.mutation.UpdatedAt(); ok {

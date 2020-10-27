@@ -48,7 +48,7 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "type", Type: field.TypeInt8},
 		{Name: "detail", Type: field.TypeString},
-		{Name: "created_at", Type: field.TypeTime},
+		{Name: "created_at", Type: field.TypeTime, Nullable: true},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
 	// DatasourceTable holds the schema information for the "datasource" table.

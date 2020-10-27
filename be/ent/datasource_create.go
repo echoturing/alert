@@ -59,6 +59,14 @@ func (dc *DatasourceCreate) SetUpdatedAt(t time.Time) *DatasourceCreate {
 	return dc
 }
 
+// SetNillableUpdatedAt sets the updatedAt field if the given value is not nil.
+func (dc *DatasourceCreate) SetNillableUpdatedAt(t *time.Time) *DatasourceCreate {
+	if t != nil {
+		dc.SetUpdatedAt(*t)
+	}
+	return dc
+}
+
 // SetID sets the id field.
 func (dc *DatasourceCreate) SetID(i int64) *DatasourceCreate {
 	dc.mutation.SetID(i)
@@ -121,6 +129,10 @@ func (dc *DatasourceCreate) defaults() {
 		v := datasource.DefaultCreatedAt()
 		dc.mutation.SetCreatedAt(v)
 	}
+	if _, ok := dc.mutation.UpdatedAt(); !ok {
+		v := datasource.DefaultUpdatedAt()
+		dc.mutation.SetUpdatedAt(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -133,9 +145,6 @@ func (dc *DatasourceCreate) check() error {
 	}
 	if _, ok := dc.mutation.Detail(); !ok {
 		return &ValidationError{Name: "detail", err: errors.New("ent: missing required field \"detail\"")}
-	}
-	if _, ok := dc.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "createdAt", err: errors.New("ent: missing required field \"createdAt\"")}
 	}
 	if _, ok := dc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updatedAt", err: errors.New("ent: missing required field \"updatedAt\"")}

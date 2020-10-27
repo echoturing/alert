@@ -33,8 +33,8 @@ func (Datasource) Fields() []ent.Field {
 		field.String(DatasourceColumnName),
 		field.Int8(DatasourceColumnType).GoType(DatasourceType(0)),
 		field.String(DatasourceColumnDetail).GoType(&DatasourceDetail{}),
-		field.Time(ColumnCreatedAt).Default(time.Now).Immutable(),
-		field.Time(ColumnUpdatedAt).UpdateDefault(time.Now),
+		field.Time(ColumnCreatedAt).Default(time.Now).Immutable().Optional(),
+		field.Time(ColumnUpdatedAt).Default(time.Now).UpdateDefault(time.Now),
 	}
 }
 

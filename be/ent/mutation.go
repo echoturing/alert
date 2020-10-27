@@ -1549,9 +1549,22 @@ func (m *DatasourceMutation) OldCreatedAt(ctx context.Context) (v time.Time, err
 	return oldValue.CreatedAt, nil
 }
 
+// ClearCreatedAt clears the value of createdAt.
+func (m *DatasourceMutation) ClearCreatedAt() {
+	m.createdAt = nil
+	m.clearedFields[datasource.FieldCreatedAt] = struct{}{}
+}
+
+// CreatedAtCleared returns if the field createdAt was cleared in this mutation.
+func (m *DatasourceMutation) CreatedAtCleared() bool {
+	_, ok := m.clearedFields[datasource.FieldCreatedAt]
+	return ok
+}
+
 // ResetCreatedAt reset all changes of the "createdAt" field.
 func (m *DatasourceMutation) ResetCreatedAt() {
 	m.createdAt = nil
+	delete(m.clearedFields, datasource.FieldCreatedAt)
 }
 
 // SetUpdatedAt sets the updatedAt field.
@@ -1746,7 +1759,11 @@ func (m *DatasourceMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared
 // during this mutation.
 func (m *DatasourceMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(datasource.FieldCreatedAt) {
+		fields = append(fields, datasource.FieldCreatedAt)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicates if this field was
@@ -1759,6 +1776,11 @@ func (m *DatasourceMutation) FieldCleared(name string) bool {
 // ClearField clears the value for the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *DatasourceMutation) ClearField(name string) error {
+	switch name {
+	case datasource.FieldCreatedAt:
+		m.ClearCreatedAt()
+		return nil
+	}
 	return fmt.Errorf("unknown Datasource nullable field %s", name)
 }
 
