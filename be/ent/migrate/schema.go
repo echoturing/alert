@@ -16,7 +16,7 @@ var (
 		{Name: "rule", Type: field.TypeString, Size: 2147483647},
 		{Name: "status", Type: field.TypeInt8},
 		{Name: "state", Type: field.TypeInt8},
-		{Name: "created_at", Type: field.TypeTime},
+		{Name: "created_at", Type: field.TypeTime, Nullable: true},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
 	// AlertTable holds the schema information for the "alert" table.
@@ -32,7 +32,7 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "type", Type: field.TypeInt8},
 		{Name: "detail", Type: field.TypeString},
-		{Name: "created_at", Type: field.TypeTime},
+		{Name: "created_at", Type: field.TypeTime, Nullable: true},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
 	// ChannelTable holds the schema information for the "channel" table.

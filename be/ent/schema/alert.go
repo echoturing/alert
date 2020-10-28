@@ -9,6 +9,8 @@ import (
 
 	"github.com/facebook/ent"
 	"github.com/facebook/ent/schema/field"
+
+	"github.com/echoturing/alert/ent/schema/sub"
 )
 
 type AlertState int8
@@ -83,11 +85,11 @@ func (Alert) Fields() []ent.Field {
 		field.Int64(AlertColumnID),
 		field.String(AlertColumnName),
 		field.Text(AlertColumnChannels).GoType(&ChannelIDS{}),
-		field.Text(AlertColumnRule).GoType(&Rule{}),
+		field.Text(AlertColumnRule).GoType(&sub.Rule{}),
 		field.Int8(AlertColumnAlertStatus).GoType(AlertStatus(0)),
 		field.Int8(AlertColumnAlertState).GoType(AlertState(0)),
-		field.Time(ColumnCreatedAt).Default(time.Now).Immutable(),
-		field.Time(ColumnUpdatedAt).UpdateDefault(time.Now),
+		field.Time(ColumnCreatedAt).Default(time.Now).Immutable().Optional(),
+		field.Time(ColumnUpdatedAt).Default(time.Now).UpdateDefault(time.Now),
 	}
 }
 

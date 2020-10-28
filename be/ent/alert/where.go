@@ -481,6 +481,20 @@ func CreatedAtLTE(v time.Time) predicate.Alert {
 	})
 }
 
+// CreatedAtIsNil applies the IsNil predicate on the "createdAt" field.
+func CreatedAtIsNil() predicate.Alert {
+	return predicate.Alert(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldCreatedAt)))
+	})
+}
+
+// CreatedAtNotNil applies the NotNil predicate on the "createdAt" field.
+func CreatedAtNotNil() predicate.Alert {
+	return predicate.Alert(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldCreatedAt)))
+	})
+}
+
 // UpdatedAtEQ applies the EQ predicate on the "updatedAt" field.
 func UpdatedAtEQ(v time.Time) predicate.Alert {
 	return predicate.Alert(func(s *sql.Selector) {

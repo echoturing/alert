@@ -5,6 +5,8 @@ import (
 
 	"github.com/facebook/ent"
 	"github.com/facebook/ent/schema/field"
+
+	"github.com/echoturing/alert/ent/schema/sub"
 )
 
 // Datasource holds the schema definition for the Datasource entity.
@@ -31,8 +33,8 @@ func (Datasource) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64(DatasourceColumnID),
 		field.String(DatasourceColumnName),
-		field.Int8(DatasourceColumnType).GoType(DatasourceType(0)),
-		field.String(DatasourceColumnDetail).GoType(&DatasourceDetail{}),
+		field.Int8(DatasourceColumnType).GoType(sub.DatasourceType(0)),
+		field.String(DatasourceColumnDetail).GoType(&sub.DatasourceDetail{}),
 		field.Time(ColumnCreatedAt).Default(time.Now).Immutable().Optional(),
 		field.Time(ColumnUpdatedAt).Default(time.Now).UpdateDefault(time.Now),
 	}

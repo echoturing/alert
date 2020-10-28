@@ -1,4 +1,4 @@
-package schema
+package sub
 
 import (
 	"database/sql/driver"
@@ -8,8 +8,6 @@ import (
 )
 
 type Rule struct {
-	ID         int64                `json:"id"`
-	Name       string               `json:"name"`
 	Interval   int64                `json:"interval"`
 	For        int64                `json:"for"`
 	Conditions []*ConditionRelation `json:"conditions"`
@@ -57,14 +55,16 @@ func (a ConditionRelation) Value() (driver.Value, error) {
 }
 
 type RuleResult struct {
-	Qualified bool     `json:"qualified"`
-	Detail    []string `json:"detail"`
+	Qualified bool               `json:"qualified"`
+	Detail    []*ConditionResult `json:"detail"`
 }
 
 func (rr *RuleResult) String() string {
 	res := fmt.Sprintf("alerting:%t\n", rr.Qualified)
-	for _, line := range rr.Detail {
-		res += line + ";\n"
+	for _, c := range rr.Detail {
+		if !c.Valid {
+			res += c.String() + ";\n"
+		}
 	}
 	return res
 }

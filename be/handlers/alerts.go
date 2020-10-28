@@ -1,19 +1,21 @@
 package handlers
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/labstack/echo"
 
 	"github.com/echoturing/alert/ent"
 	"github.com/echoturing/alert/ent/schema"
+	"github.com/echoturing/alert/ent/schema/sub"
 	"github.com/echoturing/alert/services"
 )
 
 type CreateAlertRequest struct {
-	Name    string       `json:"name"`
-	Channel []int64      `json:"channel"`
-	Rule    *schema.Rule `json:"rule"`
+	Name    string    `json:"name"`
+	Channel []int64   `json:"channel"`
+	Rule    *sub.Rule `json:"rule"`
 }
 
 func (i *impl) CreateAlert(c echo.Context) (interface{}, error) {
@@ -67,6 +69,8 @@ func (i *impl) UpdateAlert(c echo.Context) (interface{}, error) {
 	if err := c.Bind(req); err != nil {
 		return nil, err
 	}
+
+	fmt.Println(req.Rule.Conditions[0].Condition.Script)
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 0, 64)
 	if err != nil {

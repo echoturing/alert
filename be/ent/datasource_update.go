@@ -9,7 +9,7 @@ import (
 
 	"github.com/echoturing/alert/ent/datasource"
 	"github.com/echoturing/alert/ent/predicate"
-	"github.com/echoturing/alert/ent/schema"
+	"github.com/echoturing/alert/ent/schema/sub"
 	"github.com/facebook/ent/dialect/sql"
 	"github.com/facebook/ent/dialect/sql/sqlgraph"
 	"github.com/facebook/ent/schema/field"
@@ -36,20 +36,20 @@ func (du *DatasourceUpdate) SetName(s string) *DatasourceUpdate {
 }
 
 // SetType sets the type field.
-func (du *DatasourceUpdate) SetType(st schema.DatasourceType) *DatasourceUpdate {
+func (du *DatasourceUpdate) SetType(st sub.DatasourceType) *DatasourceUpdate {
 	du.mutation.ResetType()
 	du.mutation.SetType(st)
 	return du
 }
 
 // AddType adds st to type.
-func (du *DatasourceUpdate) AddType(st schema.DatasourceType) *DatasourceUpdate {
+func (du *DatasourceUpdate) AddType(st sub.DatasourceType) *DatasourceUpdate {
 	du.mutation.AddType(st)
 	return du
 }
 
 // SetDetail sets the detail field.
-func (du *DatasourceUpdate) SetDetail(sd schema.DatasourceDetail) *DatasourceUpdate {
+func (du *DatasourceUpdate) SetDetail(sd sub.DatasourceDetail) *DatasourceUpdate {
 	du.mutation.SetDetail(sd)
 	return du
 }
@@ -209,20 +209,20 @@ func (duo *DatasourceUpdateOne) SetName(s string) *DatasourceUpdateOne {
 }
 
 // SetType sets the type field.
-func (duo *DatasourceUpdateOne) SetType(st schema.DatasourceType) *DatasourceUpdateOne {
+func (duo *DatasourceUpdateOne) SetType(st sub.DatasourceType) *DatasourceUpdateOne {
 	duo.mutation.ResetType()
 	duo.mutation.SetType(st)
 	return duo
 }
 
 // AddType adds st to type.
-func (duo *DatasourceUpdateOne) AddType(st schema.DatasourceType) *DatasourceUpdateOne {
+func (duo *DatasourceUpdateOne) AddType(st sub.DatasourceType) *DatasourceUpdateOne {
 	duo.mutation.AddType(st)
 	return duo
 }
 
 // SetDetail sets the detail field.
-func (duo *DatasourceUpdateOne) SetDetail(sd schema.DatasourceDetail) *DatasourceUpdateOne {
+func (duo *DatasourceUpdateOne) SetDetail(sd sub.DatasourceDetail) *DatasourceUpdateOne {
 	duo.mutation.SetDetail(sd)
 	return duo
 }

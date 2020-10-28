@@ -5,6 +5,8 @@ import (
 
 	"github.com/facebook/ent"
 	"github.com/facebook/ent/schema/field"
+
+	"github.com/echoturing/alert/ent/schema/sub"
 )
 
 // Channel holds the schema definition for the Channel entity.
@@ -32,10 +34,10 @@ func (Channel) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64(ChannelColumnID),
 		field.String(ChannelColumnName),
-		field.Int8(ChannelColumnType).GoType(ChannelType(0)),
-		field.String(ChannelColumnDetail).GoType(&ChannelDetail{}),
-		field.Time(ColumnCreatedAt).Default(time.Now).Immutable(),
-		field.Time(ColumnUpdatedAt).UpdateDefault(time.Now),
+		field.Int8(ChannelColumnType).GoType(sub.ChannelType(0)),
+		field.String(ChannelColumnDetail).GoType(&sub.ChannelDetail{}),
+		field.Time(ColumnCreatedAt).Default(time.Now).Immutable().Optional(),
+		field.Time(ColumnUpdatedAt).Default(time.Now).UpdateDefault(time.Now),
 	}
 }
 

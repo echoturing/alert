@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/echoturing/alert/ent/datasource"
-	"github.com/echoturing/alert/ent/schema"
+	"github.com/echoturing/alert/ent/schema/sub"
 	"github.com/facebook/ent/dialect/sql"
 )
 
@@ -20,9 +20,9 @@ type Datasource struct {
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Type holds the value of the "type" field.
-	Type schema.DatasourceType `json:"type,omitempty"`
+	Type sub.DatasourceType `json:"type,omitempty"`
 	// Detail holds the value of the "detail" field.
-	Detail schema.DatasourceDetail `json:"detail,omitempty"`
+	Detail sub.DatasourceDetail `json:"detail,omitempty"`
 	// CreatedAt holds the value of the "createdAt" field.
 	CreatedAt time.Time `json:"createdAt,omitempty"`
 	// UpdatedAt holds the value of the "updatedAt" field.
@@ -32,12 +32,12 @@ type Datasource struct {
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Datasource) scanValues() []interface{} {
 	return []interface{}{
-		&sql.NullInt64{},           // id
-		&sql.NullString{},          // name
-		&sql.NullInt64{},           // type
-		&schema.DatasourceDetail{}, // detail
-		&sql.NullTime{},            // createdAt
-		&sql.NullTime{},            // updatedAt
+		&sql.NullInt64{},        // id
+		&sql.NullString{},       // name
+		&sql.NullInt64{},        // type
+		&sub.DatasourceDetail{}, // detail
+		&sql.NullTime{},         // createdAt
+		&sql.NullTime{},         // updatedAt
 	}
 }
 
@@ -61,9 +61,9 @@ func (d *Datasource) assignValues(values ...interface{}) error {
 	if value, ok := values[1].(*sql.NullInt64); !ok {
 		return fmt.Errorf("unexpected type %T for field type", values[1])
 	} else if value.Valid {
-		d.Type = schema.DatasourceType(value.Int64)
+		d.Type = sub.DatasourceType(value.Int64)
 	}
-	if value, ok := values[2].(*schema.DatasourceDetail); !ok {
+	if value, ok := values[2].(*sub.DatasourceDetail); !ok {
 		return fmt.Errorf("unexpected type %T for field detail", values[2])
 	} else if value != nil {
 		d.Detail = *value

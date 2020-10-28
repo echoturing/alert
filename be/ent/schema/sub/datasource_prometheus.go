@@ -1,4 +1,4 @@
-package schema
+package sub
 
 type PrometheusConfig struct {
 }

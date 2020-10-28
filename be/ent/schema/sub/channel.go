@@ -1,4 +1,4 @@
-package schema
+package sub
 
 import (
 	"database/sql/driver"
@@ -13,10 +13,6 @@ const (
 	ChannelTypeUndefined ChannelType = 0
 	ChannelTypeWebhook   ChannelType = 1
 )
-
-type Webhook struct {
-	URL string `json:"url"`
-}
 
 type ChannelDetail struct {
 	Webhook *Webhook `json:"webhook"`

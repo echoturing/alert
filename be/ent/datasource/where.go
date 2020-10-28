@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/echoturing/alert/ent/predicate"
-	"github.com/echoturing/alert/ent/schema"
+	"github.com/echoturing/alert/ent/schema/sub"
 	"github.com/facebook/ent/dialect/sql"
 )
 
@@ -101,7 +101,7 @@ func Name(v string) predicate.Datasource {
 }
 
 // Type applies equality check predicate on the "type" field. It's identical to TypeEQ.
-func Type(v schema.DatasourceType) predicate.Datasource {
+func Type(v sub.DatasourceType) predicate.Datasource {
 	vc := int8(v)
 	return predicate.Datasource(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldType), vc))
@@ -234,7 +234,7 @@ func NameContainsFold(v string) predicate.Datasource {
 }
 
 // TypeEQ applies the EQ predicate on the "type" field.
-func TypeEQ(v schema.DatasourceType) predicate.Datasource {
+func TypeEQ(v sub.DatasourceType) predicate.Datasource {
 	vc := int8(v)
 	return predicate.Datasource(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldType), vc))
@@ -242,7 +242,7 @@ func TypeEQ(v schema.DatasourceType) predicate.Datasource {
 }
 
 // TypeNEQ applies the NEQ predicate on the "type" field.
-func TypeNEQ(v schema.DatasourceType) predicate.Datasource {
+func TypeNEQ(v sub.DatasourceType) predicate.Datasource {
 	vc := int8(v)
 	return predicate.Datasource(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldType), vc))
@@ -250,7 +250,7 @@ func TypeNEQ(v schema.DatasourceType) predicate.Datasource {
 }
 
 // TypeIn applies the In predicate on the "type" field.
-func TypeIn(vs ...schema.DatasourceType) predicate.Datasource {
+func TypeIn(vs ...sub.DatasourceType) predicate.Datasource {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = int8(vs[i])
@@ -267,7 +267,7 @@ func TypeIn(vs ...schema.DatasourceType) predicate.Datasource {
 }
 
 // TypeNotIn applies the NotIn predicate on the "type" field.
-func TypeNotIn(vs ...schema.DatasourceType) predicate.Datasource {
+func TypeNotIn(vs ...sub.DatasourceType) predicate.Datasource {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = int8(vs[i])
@@ -284,7 +284,7 @@ func TypeNotIn(vs ...schema.DatasourceType) predicate.Datasource {
 }
 
 // TypeGT applies the GT predicate on the "type" field.
-func TypeGT(v schema.DatasourceType) predicate.Datasource {
+func TypeGT(v sub.DatasourceType) predicate.Datasource {
 	vc := int8(v)
 	return predicate.Datasource(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldType), vc))
@@ -292,7 +292,7 @@ func TypeGT(v schema.DatasourceType) predicate.Datasource {
 }
 
 // TypeGTE applies the GTE predicate on the "type" field.
-func TypeGTE(v schema.DatasourceType) predicate.Datasource {
+func TypeGTE(v sub.DatasourceType) predicate.Datasource {
 	vc := int8(v)
 	return predicate.Datasource(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldType), vc))
@@ -300,7 +300,7 @@ func TypeGTE(v schema.DatasourceType) predicate.Datasource {
 }
 
 // TypeLT applies the LT predicate on the "type" field.
-func TypeLT(v schema.DatasourceType) predicate.Datasource {
+func TypeLT(v sub.DatasourceType) predicate.Datasource {
 	vc := int8(v)
 	return predicate.Datasource(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldType), vc))
@@ -308,7 +308,7 @@ func TypeLT(v schema.DatasourceType) predicate.Datasource {
 }
 
 // TypeLTE applies the LTE predicate on the "type" field.
-func TypeLTE(v schema.DatasourceType) predicate.Datasource {
+func TypeLTE(v sub.DatasourceType) predicate.Datasource {
 	vc := int8(v)
 	return predicate.Datasource(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldType), vc))

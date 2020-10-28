@@ -23,6 +23,8 @@ func init() {
 	alert.DefaultCreatedAt = alertDescCreatedAt.Default.(func() time.Time)
 	// alertDescUpdatedAt is the schema descriptor for updatedAt field.
 	alertDescUpdatedAt := alertFields[7].Descriptor()
+	// alert.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
+	alert.DefaultUpdatedAt = alertDescUpdatedAt.Default.(func() time.Time)
 	// alert.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
 	alert.UpdateDefaultUpdatedAt = alertDescUpdatedAt.UpdateDefault.(func() time.Time)
 	channelFields := schema.Channel{}.Fields()
@@ -33,6 +35,8 @@ func init() {
 	channel.DefaultCreatedAt = channelDescCreatedAt.Default.(func() time.Time)
 	// channelDescUpdatedAt is the schema descriptor for updatedAt field.
 	channelDescUpdatedAt := channelFields[5].Descriptor()
+	// channel.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
+	channel.DefaultUpdatedAt = channelDescUpdatedAt.Default.(func() time.Time)
 	// channel.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
 	channel.UpdateDefaultUpdatedAt = channelDescUpdatedAt.UpdateDefault.(func() time.Time)
 	datasourceFields := schema.Datasource{}.Fields()

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/echoturing/alert/ent/channel"
-	"github.com/echoturing/alert/ent/schema"
+	"github.com/echoturing/alert/ent/schema/sub"
 	"github.com/facebook/ent/dialect/sql/sqlgraph"
 	"github.com/facebook/ent/schema/field"
 )
@@ -28,13 +28,13 @@ func (cc *ChannelCreate) SetName(s string) *ChannelCreate {
 }
 
 // SetType sets the type field.
-func (cc *ChannelCreate) SetType(st schema.ChannelType) *ChannelCreate {
+func (cc *ChannelCreate) SetType(st sub.ChannelType) *ChannelCreate {
 	cc.mutation.SetType(st)
 	return cc
 }
 
 // SetDetail sets the detail field.
-func (cc *ChannelCreate) SetDetail(sd schema.ChannelDetail) *ChannelCreate {
+func (cc *ChannelCreate) SetDetail(sd sub.ChannelDetail) *ChannelCreate {
 	cc.mutation.SetDetail(sd)
 	return cc
 }
@@ -56,6 +56,14 @@ func (cc *ChannelCreate) SetNillableCreatedAt(t *time.Time) *ChannelCreate {
 // SetUpdatedAt sets the updatedAt field.
 func (cc *ChannelCreate) SetUpdatedAt(t time.Time) *ChannelCreate {
 	cc.mutation.SetUpdatedAt(t)
+	return cc
+}
+
+// SetNillableUpdatedAt sets the updatedAt field if the given value is not nil.
+func (cc *ChannelCreate) SetNillableUpdatedAt(t *time.Time) *ChannelCreate {
+	if t != nil {
+		cc.SetUpdatedAt(*t)
+	}
 	return cc
 }
 
@@ -121,6 +129,10 @@ func (cc *ChannelCreate) defaults() {
 		v := channel.DefaultCreatedAt()
 		cc.mutation.SetCreatedAt(v)
 	}
+	if _, ok := cc.mutation.UpdatedAt(); !ok {
+		v := channel.DefaultUpdatedAt()
+		cc.mutation.SetUpdatedAt(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -133,9 +145,6 @@ func (cc *ChannelCreate) check() error {
 	}
 	if _, ok := cc.mutation.Detail(); !ok {
 		return &ValidationError{Name: "detail", err: errors.New("ent: missing required field \"detail\"")}
-	}
-	if _, ok := cc.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "createdAt", err: errors.New("ent: missing required field \"createdAt\"")}
 	}
 	if _, ok := cc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updatedAt", err: errors.New("ent: missing required field \"updatedAt\"")}

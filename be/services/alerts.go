@@ -1,18 +1,15 @@
 package services
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/echoturing/log"
-	"github.com/labstack/echo/v4"
 
 	"github.com/echoturing/alert/ent"
 	"github.com/echoturing/alert/ent/schema"
+	"github.com/echoturing/alert/ent/schema/sub"
 )
 
 func (i *impl) CreateAlert(ctx context.Context, alert *ent.Alert) (*ent.Alert, error) {
@@ -36,7 +33,7 @@ func (i *impl) ListAlerts(ctx context.Context, status schema.AlertStatus, alertS
 type UpdateAlertRequest struct {
 	Name     string             `json:"name"`
 	Channels []int64            `json:"channels"`
-	Rule     *schema.Rule       `json:"rule"`
+	Rule     *sub.Rule          `json:"rule"`
 	Status   schema.AlertStatus `json:"status"`
 }
 
@@ -61,7 +58,7 @@ func (i *impl) UpdateAlert(ctx context.Context, id int64, update *UpdateAlertReq
 			return nil, fmt.Errorf("start alert error:%w", err)
 		}
 	case schema.StatusClose:
-		err = i.stopAlert(ctx, alert)
+		err = i.StopAlert(ctx, alert)
 		if err != nil {
 			return nil, fmt.Errorf("stop alert error:%w", err)
 		}
@@ -85,8 +82,8 @@ func (i *impl) StartAllAlert(ctx context.Context) error {
 	return nil
 }
 
-func (i *impl) evaluatesRule(ctx context.Context, rule schema.Rule) (*schema.RuleResult, error) {
-	var final schema.RuleResult
+func (i *impl) evaluatesRule(ctx context.Context, rule sub.Rule) (*sub.RuleResult, error) {
+	var final sub.RuleResult
 	for _, condition := range rule.Conditions {
 		conditionResults, err := i.evaluatesCondition(ctx, condition.Condition)
 		if err != nil {
@@ -96,9 +93,9 @@ func (i *impl) evaluatesRule(ctx context.Context, rule schema.Rule) (*schema.Rul
 		switch condition.Type {
 		default:
 			log.ErrorWithContext(ctx, "unknown condition type", "condition", condition)
-		case schema.ConditionRelationTypeOr, schema.ConditionRelationTypeUndefined:
+		case sub.ConditionRelationTypeOr, sub.ConditionRelationTypeUndefined:
 			final.Qualified = final.Qualified || ruleResult.Qualified
-		case schema.ConditionRelationTypeAnd:
+		case sub.ConditionRelationTypeAnd:
 			final.Qualified = final.Qualified && ruleResult.Qualified
 		}
 		final.Detail = append(final.Detail, ruleResult.Detail...)
@@ -106,7 +103,7 @@ func (i *impl) evaluatesRule(ctx context.Context, rule schema.Rule) (*schema.Rul
 	return &final, nil
 }
 
-func (i *impl) evaluatesCondition(ctx context.Context, condition *schema.Condition) ([]*schema.ConditionResult, error) {
+func (i *impl) evaluatesCondition(ctx context.Context, condition *sub.Condition) ([]*sub.ConditionResult, error) {
 	// get datasource
 	datasource, err := i.dal.GetDatasourceByID(ctx, condition.DatasourceID)
 	if err != nil {
@@ -117,12 +114,12 @@ func (i *impl) evaluatesCondition(ctx context.Context, condition *schema.Conditi
 		return nil, err
 	}
 
-	results := make([]*schema.ConditionResult, 0, len(datasourceResults))
+	results := make([]*sub.ConditionResult, 0, len(datasourceResults))
 	for _, dr := range datasourceResults {
-		results = append(results, &schema.ConditionResult{
+		results = append(results, &sub.ConditionResult{
 			Name:      dr.Name,
 			Value:     dr.Value,
-			Valid:     condition.Benchmark.Valid(dr.Value),
+			Valid:     !condition.Benchmark.NotValid(dr.Value),
 			Condition: condition,
 		})
 
@@ -130,16 +127,15 @@ func (i *impl) evaluatesCondition(ctx context.Context, condition *schema.Conditi
 	return results, nil
 }
 
-func mergeConditionResultToRuleResult(tx context.Context, results []*schema.ConditionResult) *schema.RuleResult {
-	rr := &schema.RuleResult{
+func mergeConditionResultToRuleResult(tx context.Context, results []*sub.ConditionResult) *sub.RuleResult {
+	rr := &sub.RuleResult{
 		Qualified: true,
-		Detail:    make([]string, 0),
 	}
 	for _, result := range results {
 		if !result.Valid {
 			rr.Qualified = false
-			rr.Detail = append(rr.Detail, result.String())
 		}
+		rr.Detail = append(rr.Detail, result)
 	}
 	return rr
 }
@@ -147,9 +143,8 @@ func mergeConditionResultToRuleResult(tx context.Context, results []*schema.Cond
 func (i *impl) StartAlert(ctx context.Context, alert *ent.Alert) error {
 	i.mutex.Lock()
 	defer i.mutex.Unlock()
-	if _, ok := i.alerts[alert.ID]; ok {
-		//
-		return nil
+	if ticker, ok := i.alerts[alert.ID]; ok {
+		ticker.Stop()
 	}
 	ticker := time.NewTicker(time.Second * time.Duration(alert.Rule.Interval))
 	i.alerts[alert.ID] = ticker
@@ -162,6 +157,7 @@ func (i *impl) StartAlert(ctx context.Context, alert *ent.Alert) error {
 					log.ErrorWithContext(ctx, "evaluate error", "err", err.Error())
 					continue
 				}
+				log.InfoWithContext(ctx, "alert", "res", ruleResult)
 				for _, channelID := range alert.Channels {
 					channel, err := i.dal.GetChannelByID(ctx, channelID)
 					if err != nil {
@@ -178,12 +174,12 @@ func (i *impl) StartAlert(ctx context.Context, alert *ent.Alert) error {
 							continue
 						}
 					}
-					alert.State = ruleResultToAlertState(ruleResult)
-					_, err = i.dal.UpdateAlert(ctx, alert.ID, alert)
-					if err != nil {
-						log.ErrorWithContext(ctx, "update alert error", "err", err.Error())
-						continue
-					}
+				}
+				alert.State = ruleResultToAlertState(ruleResult)
+				_, err = i.dal.UpdateAlert(ctx, alert.ID, alert)
+				if err != nil {
+					log.ErrorWithContext(ctx, "update alert error", "err", err.Error())
+					continue
 				}
 			}
 		}
@@ -191,7 +187,7 @@ func (i *impl) StartAlert(ctx context.Context, alert *ent.Alert) error {
 	return nil
 }
 
-func ruleResultToAlertState(result *schema.RuleResult) schema.AlertState {
+func ruleResultToAlertState(result *sub.RuleResult) schema.AlertState {
 	switch result.Qualified {
 	default:
 		// TODO: status may be pending...but now just has two status
@@ -203,7 +199,7 @@ func ruleResultToAlertState(result *schema.RuleResult) schema.AlertState {
 	}
 }
 
-func (i *impl) stopAlert(ctx context.Context, alert *ent.Alert) error {
+func (i *impl) StopAlert(ctx context.Context, alert *ent.Alert) error {
 	i.mutex.Lock()
 	defer i.mutex.Unlock()
 	if ticker, ok := i.alerts[alert.ID]; ok {
@@ -213,28 +209,14 @@ func (i *impl) stopAlert(ctx context.Context, alert *ent.Alert) error {
 	return nil
 }
 
-func (i *impl) sendAlert(ctx context.Context, alert *ent.Alert, channel *ent.Channel, result *schema.RuleResult) error {
+func (i *impl) sendAlert(ctx context.Context, alert *ent.Alert, channel *ent.Channel, result *sub.RuleResult) error {
 	switch channel.Type {
 	default:
 		return fmt.Errorf("unknown channel type")
-	case schema.ChannelTypeWebhook:
-		return i.sendWebhookAlert(ctx, alert, channel.Detail.Webhook, result)
+	case sub.ChannelTypeWebhook:
+		return channel.Detail.Webhook.SendWebhookAlert(ctx, &sub.WebhookMessage{
+			Title:   alert.Name,
+			Message: result.String(),
+		})
 	}
-}
-
-func (i *impl) sendWebhookAlert(ctx context.Context, alert *ent.Alert, webhook *schema.Webhook, result *schema.RuleResult) error {
-	postData := map[string]string{
-		"msg":         result.String(),
-		"alert title": alert.Name,
-	}
-	data, err := json.Marshal(postData)
-	if err != nil {
-		return err
-	}
-	// TODO: temp ignore response
-	_, err = http.DefaultClient.Post(webhook.URL, echo.MIMEApplicationJSON, bytes.NewBuffer(data))
-	if err != nil {
-		return err
-	}
-	return nil
 }

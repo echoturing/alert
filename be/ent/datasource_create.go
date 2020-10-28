@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/echoturing/alert/ent/datasource"
-	"github.com/echoturing/alert/ent/schema"
+	"github.com/echoturing/alert/ent/schema/sub"
 	"github.com/facebook/ent/dialect/sql/sqlgraph"
 	"github.com/facebook/ent/schema/field"
 )
@@ -28,13 +28,13 @@ func (dc *DatasourceCreate) SetName(s string) *DatasourceCreate {
 }
 
 // SetType sets the type field.
-func (dc *DatasourceCreate) SetType(st schema.DatasourceType) *DatasourceCreate {
+func (dc *DatasourceCreate) SetType(st sub.DatasourceType) *DatasourceCreate {
 	dc.mutation.SetType(st)
 	return dc
 }
 
 // SetDetail sets the detail field.
-func (dc *DatasourceCreate) SetDetail(sd schema.DatasourceDetail) *DatasourceCreate {
+func (dc *DatasourceCreate) SetDetail(sd sub.DatasourceDetail) *DatasourceCreate {
 	dc.mutation.SetDetail(sd)
 	return dc
 }

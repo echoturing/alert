@@ -1,4 +1,4 @@
-package schema
+package sub
 
 import (
 	"context"
@@ -63,17 +63,20 @@ func (d *MySQLConfig) Connect(ctx context.Context) error {
 }
 
 type DatasourceResult struct {
-	Name  string  `json:"name"`
-	Value float64 `json:"value"`
+	Name        string  `json:"name"`
+	Value       float64 `json:"value"`
+	ValueString string  `json:"valueString"`
 }
+
+const nameKey = "name"
 
 func initResults(columns []string) []*DatasourceResult {
 	result := make([]*DatasourceResult, 0, len(columns))
 	for i := 0; i < len(columns); i++ {
-		result = append(result, &DatasourceResult{
-			Name:  columns[i],
-			Value: 0,
-		})
+		dr := &DatasourceResult{
+			Name: columns[i],
+		}
+		result = append(result, dr)
 	}
 	return result
 }
@@ -81,12 +84,32 @@ func initResults(columns []string) []*DatasourceResult {
 func resultsToValueInterfacePointer(results []*DatasourceResult) []interface{} {
 	rt := make([]interface{}, 0, len(results))
 	for _, result := range results {
-		rt = append(rt, &result.Value)
+		if result.Name == nameKey {
+			rt = append(rt, &result.ValueString)
+		} else {
+			rt = append(rt, &result.Value)
+		}
 	}
 	return rt
 }
 
-func (d *MySQLConfig) EvalScript(ctx context.Context, script string) ([]*DatasourceResult, error) {
+func injectNameToResult(drs []*DatasourceResult) []*DatasourceResult {
+	newRes := make([]*DatasourceResult, 0)
+	for _, dr := range drs {
+		if dr.Name == nameKey {
+			for _, innerDr := range drs {
+				if innerDr.Name != nameKey {
+					innerDr.Name = dr.ValueString + ":" + innerDr.Name
+					newRes = append(newRes, innerDr)
+				}
+			}
+			break
+		}
+	}
+	return newRes
+}
+
+func (d *MySQLConfig) Evaluates(ctx context.Context, script string) ([]*DatasourceResult, error) {
 	db, err := newMysqlConnection(d.User, d.Password, d.Host, d.Port, d.DBName)
 	if err != nil {
 		return nil, err
@@ -113,5 +136,7 @@ func (d *MySQLConfig) EvalScript(ctx context.Context, script string) ([]*Datasou
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+	results = injectNameToResult(results)
+	fmt.Println(results[0].Name, results[0].Value)
 	return results, nil
 }

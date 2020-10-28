@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/echoturing/alert/ent"
-	"github.com/echoturing/alert/ent/schema"
+	"github.com/echoturing/alert/ent/schema/sub"
 )
 
 func (i *impl) CreateDatasource(ctx context.Context, datasource *ent.Datasource) (*ent.Datasource, error) {
@@ -21,9 +21,9 @@ func (i *impl) ListDatasource(ctx context.Context) ([]*ent.Datasource, error) {
 }
 
 type UpdateDatasourceRequest struct {
-	Name   string                   `json:"name"`
-	Type   schema.DatasourceType    `json:"type"`
-	Detail *schema.DatasourceDetail `json:"detail"`
+	Name   string                `json:"name"`
+	Type   sub.DatasourceType    `json:"type"`
+	Detail *sub.DatasourceDetail `json:"detail"`
 }
 
 func (i *impl) UpdateDatasource(ctx context.Context, id int64, update *UpdateDatasourceRequest) (*ent.Datasource, error) {
@@ -44,19 +44,19 @@ func (i *impl) connectDatasource(ctx context.Context, datasource *ent.Datasource
 	switch datasource.Type {
 	default:
 		return fmt.Errorf("unknown datasource type")
-	case schema.DatasourceTypeMySQL:
+	case sub.DatasourceTypeMySQL:
 		return datasource.Detail.Mysql.Connect(ctx)
-	case schema.DatasourceTypePrometheus:
+	case sub.DatasourceTypePrometheus:
 		// TODO(xiangxu)
 	}
 	return nil
 }
 
-func (i *impl) evaluatesDatasource(ctx context.Context, datasource *ent.Datasource, script string) ([]*schema.DatasourceResult, error) {
+func (_ *impl) evaluatesDatasource(ctx context.Context, datasource *ent.Datasource, script string) ([]*sub.DatasourceResult, error) {
 	switch datasource.Type {
 	default:
 		return nil, fmt.Errorf("unknow type:%d", datasource.Type)
-	case schema.DatasourceTypeMySQL:
-		return datasource.Detail.Mysql.EvalScript(ctx, script)
+	case sub.DatasourceTypeMySQL:
+		return datasource.Detail.Mysql.Evaluates(ctx, script)
 	}
 }

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/echoturing/alert/ent/predicate"
-	"github.com/echoturing/alert/ent/schema"
+	"github.com/echoturing/alert/ent/schema/sub"
 	"github.com/facebook/ent/dialect/sql"
 )
 
@@ -101,7 +101,7 @@ func Name(v string) predicate.Channel {
 }
 
 // Type applies equality check predicate on the "type" field. It's identical to TypeEQ.
-func Type(v schema.ChannelType) predicate.Channel {
+func Type(v sub.ChannelType) predicate.Channel {
 	vc := int8(v)
 	return predicate.Channel(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldType), vc))
@@ -234,7 +234,7 @@ func NameContainsFold(v string) predicate.Channel {
 }
 
 // TypeEQ applies the EQ predicate on the "type" field.
-func TypeEQ(v schema.ChannelType) predicate.Channel {
+func TypeEQ(v sub.ChannelType) predicate.Channel {
 	vc := int8(v)
 	return predicate.Channel(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldType), vc))
@@ -242,7 +242,7 @@ func TypeEQ(v schema.ChannelType) predicate.Channel {
 }
 
 // TypeNEQ applies the NEQ predicate on the "type" field.
-func TypeNEQ(v schema.ChannelType) predicate.Channel {
+func TypeNEQ(v sub.ChannelType) predicate.Channel {
 	vc := int8(v)
 	return predicate.Channel(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldType), vc))
@@ -250,7 +250,7 @@ func TypeNEQ(v schema.ChannelType) predicate.Channel {
 }
 
 // TypeIn applies the In predicate on the "type" field.
-func TypeIn(vs ...schema.ChannelType) predicate.Channel {
+func TypeIn(vs ...sub.ChannelType) predicate.Channel {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = int8(vs[i])
@@ -267,7 +267,7 @@ func TypeIn(vs ...schema.ChannelType) predicate.Channel {
 }
 
 // TypeNotIn applies the NotIn predicate on the "type" field.
-func TypeNotIn(vs ...schema.ChannelType) predicate.Channel {
+func TypeNotIn(vs ...sub.ChannelType) predicate.Channel {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = int8(vs[i])
@@ -284,7 +284,7 @@ func TypeNotIn(vs ...schema.ChannelType) predicate.Channel {
 }
 
 // TypeGT applies the GT predicate on the "type" field.
-func TypeGT(v schema.ChannelType) predicate.Channel {
+func TypeGT(v sub.ChannelType) predicate.Channel {
 	vc := int8(v)
 	return predicate.Channel(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldType), vc))
@@ -292,7 +292,7 @@ func TypeGT(v schema.ChannelType) predicate.Channel {
 }
 
 // TypeGTE applies the GTE predicate on the "type" field.
-func TypeGTE(v schema.ChannelType) predicate.Channel {
+func TypeGTE(v sub.ChannelType) predicate.Channel {
 	vc := int8(v)
 	return predicate.Channel(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldType), vc))
@@ -300,7 +300,7 @@ func TypeGTE(v schema.ChannelType) predicate.Channel {
 }
 
 // TypeLT applies the LT predicate on the "type" field.
-func TypeLT(v schema.ChannelType) predicate.Channel {
+func TypeLT(v sub.ChannelType) predicate.Channel {
 	vc := int8(v)
 	return predicate.Channel(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldType), vc))
@@ -308,7 +308,7 @@ func TypeLT(v schema.ChannelType) predicate.Channel {
 }
 
 // TypeLTE applies the LTE predicate on the "type" field.
-func TypeLTE(v schema.ChannelType) predicate.Channel {
+func TypeLTE(v sub.ChannelType) predicate.Channel {
 	vc := int8(v)
 	return predicate.Channel(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldType), vc))
@@ -388,6 +388,20 @@ func CreatedAtLT(v time.Time) predicate.Channel {
 func CreatedAtLTE(v time.Time) predicate.Channel {
 	return predicate.Channel(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldCreatedAt), v))
+	})
+}
+
+// CreatedAtIsNil applies the IsNil predicate on the "createdAt" field.
+func CreatedAtIsNil() predicate.Channel {
+	return predicate.Channel(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldCreatedAt)))
+	})
+}
+
+// CreatedAtNotNil applies the NotNil predicate on the "createdAt" field.
+func CreatedAtNotNil() predicate.Channel {
+	return predicate.Channel(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldCreatedAt)))
 	})
 }
 

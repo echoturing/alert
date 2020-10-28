@@ -10,6 +10,7 @@ import (
 
 	"github.com/echoturing/alert/ent/alert"
 	"github.com/echoturing/alert/ent/schema"
+	"github.com/echoturing/alert/ent/schema/sub"
 	"github.com/facebook/ent/dialect/sql/sqlgraph"
 	"github.com/facebook/ent/schema/field"
 )
@@ -34,7 +35,7 @@ func (ac *AlertCreate) SetChannels(si schema.ChannelIDS) *AlertCreate {
 }
 
 // SetRule sets the rule field.
-func (ac *AlertCreate) SetRule(s schema.Rule) *AlertCreate {
+func (ac *AlertCreate) SetRule(s sub.Rule) *AlertCreate {
 	ac.mutation.SetRule(s)
 	return ac
 }
@@ -68,6 +69,14 @@ func (ac *AlertCreate) SetNillableCreatedAt(t *time.Time) *AlertCreate {
 // SetUpdatedAt sets the updatedAt field.
 func (ac *AlertCreate) SetUpdatedAt(t time.Time) *AlertCreate {
 	ac.mutation.SetUpdatedAt(t)
+	return ac
+}
+
+// SetNillableUpdatedAt sets the updatedAt field if the given value is not nil.
+func (ac *AlertCreate) SetNillableUpdatedAt(t *time.Time) *AlertCreate {
+	if t != nil {
+		ac.SetUpdatedAt(*t)
+	}
 	return ac
 }
 
@@ -133,6 +142,10 @@ func (ac *AlertCreate) defaults() {
 		v := alert.DefaultCreatedAt()
 		ac.mutation.SetCreatedAt(v)
 	}
+	if _, ok := ac.mutation.UpdatedAt(); !ok {
+		v := alert.DefaultUpdatedAt()
+		ac.mutation.SetUpdatedAt(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -151,9 +164,6 @@ func (ac *AlertCreate) check() error {
 	}
 	if _, ok := ac.mutation.State(); !ok {
 		return &ValidationError{Name: "state", err: errors.New("ent: missing required field \"state\"")}
-	}
-	if _, ok := ac.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "createdAt", err: errors.New("ent: missing required field \"createdAt\"")}
 	}
 	if _, ok := ac.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updatedAt", err: errors.New("ent: missing required field \"updatedAt\"")}

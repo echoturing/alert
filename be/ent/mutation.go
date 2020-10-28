@@ -12,6 +12,7 @@ import (
 	"github.com/echoturing/alert/ent/channel"
 	"github.com/echoturing/alert/ent/datasource"
 	"github.com/echoturing/alert/ent/schema"
+	"github.com/echoturing/alert/ent/schema/sub"
 
 	"github.com/facebook/ent"
 )
@@ -39,7 +40,7 @@ type AlertMutation struct {
 	id            *int64
 	name          *string
 	channels      *schema.ChannelIDS
-	rule          *schema.Rule
+	rule          *sub.Rule
 	status        *schema.AlertStatus
 	addstatus     *schema.AlertStatus
 	state         *schema.AlertState
@@ -211,12 +212,12 @@ func (m *AlertMutation) ResetChannels() {
 }
 
 // SetRule sets the rule field.
-func (m *AlertMutation) SetRule(s schema.Rule) {
+func (m *AlertMutation) SetRule(s sub.Rule) {
 	m.rule = &s
 }
 
 // Rule returns the rule value in the mutation.
-func (m *AlertMutation) Rule() (r schema.Rule, exists bool) {
+func (m *AlertMutation) Rule() (r sub.Rule, exists bool) {
 	v := m.rule
 	if v == nil {
 		return
@@ -228,7 +229,7 @@ func (m *AlertMutation) Rule() (r schema.Rule, exists bool) {
 // If the Alert object wasn't provided to the builder, the object is fetched
 // from the database.
 // An error is returned if the mutation operation is not UpdateOne, or database query fails.
-func (m *AlertMutation) OldRule(ctx context.Context) (v schema.Rule, err error) {
+func (m *AlertMutation) OldRule(ctx context.Context) (v sub.Rule, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, fmt.Errorf("OldRule is allowed only on UpdateOne operations")
 	}
@@ -393,9 +394,22 @@ func (m *AlertMutation) OldCreatedAt(ctx context.Context) (v time.Time, err erro
 	return oldValue.CreatedAt, nil
 }
 
+// ClearCreatedAt clears the value of createdAt.
+func (m *AlertMutation) ClearCreatedAt() {
+	m.createdAt = nil
+	m.clearedFields[alert.FieldCreatedAt] = struct{}{}
+}
+
+// CreatedAtCleared returns if the field createdAt was cleared in this mutation.
+func (m *AlertMutation) CreatedAtCleared() bool {
+	_, ok := m.clearedFields[alert.FieldCreatedAt]
+	return ok
+}
+
 // ResetCreatedAt reset all changes of the "createdAt" field.
 func (m *AlertMutation) ResetCreatedAt() {
 	m.createdAt = nil
+	delete(m.clearedFields, alert.FieldCreatedAt)
 }
 
 // SetUpdatedAt sets the updatedAt field.
@@ -540,7 +554,7 @@ func (m *AlertMutation) SetField(name string, value ent.Value) error {
 		m.SetChannels(v)
 		return nil
 	case alert.FieldRule:
-		v, ok := value.(schema.Rule)
+		v, ok := value.(sub.Rule)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -630,7 +644,11 @@ func (m *AlertMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared
 // during this mutation.
 func (m *AlertMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(alert.FieldCreatedAt) {
+		fields = append(fields, alert.FieldCreatedAt)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicates if this field was
@@ -643,6 +661,11 @@ func (m *AlertMutation) FieldCleared(name string) bool {
 // ClearField clears the value for the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *AlertMutation) ClearField(name string) error {
+	switch name {
+	case alert.FieldCreatedAt:
+		m.ClearCreatedAt()
+		return nil
+	}
 	return fmt.Errorf("unknown Alert nullable field %s", name)
 }
 
@@ -736,9 +759,9 @@ type ChannelMutation struct {
 	typ           string
 	id            *int64
 	name          *string
-	_type         *schema.ChannelType
-	add_type      *schema.ChannelType
-	detail        *schema.ChannelDetail
+	_type         *sub.ChannelType
+	add_type      *sub.ChannelType
+	detail        *sub.ChannelDetail
 	createdAt     *time.Time
 	updatedAt     *time.Time
 	clearedFields map[string]struct{}
@@ -869,13 +892,13 @@ func (m *ChannelMutation) ResetName() {
 }
 
 // SetType sets the type field.
-func (m *ChannelMutation) SetType(st schema.ChannelType) {
+func (m *ChannelMutation) SetType(st sub.ChannelType) {
 	m._type = &st
 	m.add_type = nil
 }
 
 // GetType returns the type value in the mutation.
-func (m *ChannelMutation) GetType() (r schema.ChannelType, exists bool) {
+func (m *ChannelMutation) GetType() (r sub.ChannelType, exists bool) {
 	v := m._type
 	if v == nil {
 		return
@@ -887,7 +910,7 @@ func (m *ChannelMutation) GetType() (r schema.ChannelType, exists bool) {
 // If the Channel object wasn't provided to the builder, the object is fetched
 // from the database.
 // An error is returned if the mutation operation is not UpdateOne, or database query fails.
-func (m *ChannelMutation) OldType(ctx context.Context) (v schema.ChannelType, err error) {
+func (m *ChannelMutation) OldType(ctx context.Context) (v sub.ChannelType, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, fmt.Errorf("OldType is allowed only on UpdateOne operations")
 	}
@@ -902,7 +925,7 @@ func (m *ChannelMutation) OldType(ctx context.Context) (v schema.ChannelType, er
 }
 
 // AddType adds st to type.
-func (m *ChannelMutation) AddType(st schema.ChannelType) {
+func (m *ChannelMutation) AddType(st sub.ChannelType) {
 	if m.add_type != nil {
 		*m.add_type += st
 	} else {
@@ -911,7 +934,7 @@ func (m *ChannelMutation) AddType(st schema.ChannelType) {
 }
 
 // AddedType returns the value that was added to the type field in this mutation.
-func (m *ChannelMutation) AddedType() (r schema.ChannelType, exists bool) {
+func (m *ChannelMutation) AddedType() (r sub.ChannelType, exists bool) {
 	v := m.add_type
 	if v == nil {
 		return
@@ -926,12 +949,12 @@ func (m *ChannelMutation) ResetType() {
 }
 
 // SetDetail sets the detail field.
-func (m *ChannelMutation) SetDetail(sd schema.ChannelDetail) {
+func (m *ChannelMutation) SetDetail(sd sub.ChannelDetail) {
 	m.detail = &sd
 }
 
 // Detail returns the detail value in the mutation.
-func (m *ChannelMutation) Detail() (r schema.ChannelDetail, exists bool) {
+func (m *ChannelMutation) Detail() (r sub.ChannelDetail, exists bool) {
 	v := m.detail
 	if v == nil {
 		return
@@ -943,7 +966,7 @@ func (m *ChannelMutation) Detail() (r schema.ChannelDetail, exists bool) {
 // If the Channel object wasn't provided to the builder, the object is fetched
 // from the database.
 // An error is returned if the mutation operation is not UpdateOne, or database query fails.
-func (m *ChannelMutation) OldDetail(ctx context.Context) (v schema.ChannelDetail, err error) {
+func (m *ChannelMutation) OldDetail(ctx context.Context) (v sub.ChannelDetail, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, fmt.Errorf("OldDetail is allowed only on UpdateOne operations")
 	}
@@ -994,9 +1017,22 @@ func (m *ChannelMutation) OldCreatedAt(ctx context.Context) (v time.Time, err er
 	return oldValue.CreatedAt, nil
 }
 
+// ClearCreatedAt clears the value of createdAt.
+func (m *ChannelMutation) ClearCreatedAt() {
+	m.createdAt = nil
+	m.clearedFields[channel.FieldCreatedAt] = struct{}{}
+}
+
+// CreatedAtCleared returns if the field createdAt was cleared in this mutation.
+func (m *ChannelMutation) CreatedAtCleared() bool {
+	_, ok := m.clearedFields[channel.FieldCreatedAt]
+	return ok
+}
+
 // ResetCreatedAt reset all changes of the "createdAt" field.
 func (m *ChannelMutation) ResetCreatedAt() {
 	m.createdAt = nil
+	delete(m.clearedFields, channel.FieldCreatedAt)
 }
 
 // SetUpdatedAt sets the updatedAt field.
@@ -1120,14 +1156,14 @@ func (m *ChannelMutation) SetField(name string, value ent.Value) error {
 		m.SetName(v)
 		return nil
 	case channel.FieldType:
-		v, ok := value.(schema.ChannelType)
+		v, ok := value.(sub.ChannelType)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetType(v)
 		return nil
 	case channel.FieldDetail:
-		v, ok := value.(schema.ChannelDetail)
+		v, ok := value.(sub.ChannelDetail)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1178,7 +1214,7 @@ func (m *ChannelMutation) AddedField(name string) (ent.Value, bool) {
 func (m *ChannelMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case channel.FieldType:
-		v, ok := value.(schema.ChannelType)
+		v, ok := value.(sub.ChannelType)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1191,7 +1227,11 @@ func (m *ChannelMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared
 // during this mutation.
 func (m *ChannelMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(channel.FieldCreatedAt) {
+		fields = append(fields, channel.FieldCreatedAt)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicates if this field was
@@ -1204,6 +1244,11 @@ func (m *ChannelMutation) FieldCleared(name string) bool {
 // ClearField clears the value for the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *ChannelMutation) ClearField(name string) error {
+	switch name {
+	case channel.FieldCreatedAt:
+		m.ClearCreatedAt()
+		return nil
+	}
 	return fmt.Errorf("unknown Channel nullable field %s", name)
 }
 
@@ -1291,9 +1336,9 @@ type DatasourceMutation struct {
 	typ           string
 	id            *int64
 	name          *string
-	_type         *schema.DatasourceType
-	add_type      *schema.DatasourceType
-	detail        *schema.DatasourceDetail
+	_type         *sub.DatasourceType
+	add_type      *sub.DatasourceType
+	detail        *sub.DatasourceDetail
 	createdAt     *time.Time
 	updatedAt     *time.Time
 	clearedFields map[string]struct{}
@@ -1424,13 +1469,13 @@ func (m *DatasourceMutation) ResetName() {
 }
 
 // SetType sets the type field.
-func (m *DatasourceMutation) SetType(st schema.DatasourceType) {
+func (m *DatasourceMutation) SetType(st sub.DatasourceType) {
 	m._type = &st
 	m.add_type = nil
 }
 
 // GetType returns the type value in the mutation.
-func (m *DatasourceMutation) GetType() (r schema.DatasourceType, exists bool) {
+func (m *DatasourceMutation) GetType() (r sub.DatasourceType, exists bool) {
 	v := m._type
 	if v == nil {
 		return
@@ -1442,7 +1487,7 @@ func (m *DatasourceMutation) GetType() (r schema.DatasourceType, exists bool) {
 // If the Datasource object wasn't provided to the builder, the object is fetched
 // from the database.
 // An error is returned if the mutation operation is not UpdateOne, or database query fails.
-func (m *DatasourceMutation) OldType(ctx context.Context) (v schema.DatasourceType, err error) {
+func (m *DatasourceMutation) OldType(ctx context.Context) (v sub.DatasourceType, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, fmt.Errorf("OldType is allowed only on UpdateOne operations")
 	}
@@ -1457,7 +1502,7 @@ func (m *DatasourceMutation) OldType(ctx context.Context) (v schema.DatasourceTy
 }
 
 // AddType adds st to type.
-func (m *DatasourceMutation) AddType(st schema.DatasourceType) {
+func (m *DatasourceMutation) AddType(st sub.DatasourceType) {
 	if m.add_type != nil {
 		*m.add_type += st
 	} else {
@@ -1466,7 +1511,7 @@ func (m *DatasourceMutation) AddType(st schema.DatasourceType) {
 }
 
 // AddedType returns the value that was added to the type field in this mutation.
-func (m *DatasourceMutation) AddedType() (r schema.DatasourceType, exists bool) {
+func (m *DatasourceMutation) AddedType() (r sub.DatasourceType, exists bool) {
 	v := m.add_type
 	if v == nil {
 		return
@@ -1481,12 +1526,12 @@ func (m *DatasourceMutation) ResetType() {
 }
 
 // SetDetail sets the detail field.
-func (m *DatasourceMutation) SetDetail(sd schema.DatasourceDetail) {
+func (m *DatasourceMutation) SetDetail(sd sub.DatasourceDetail) {
 	m.detail = &sd
 }
 
 // Detail returns the detail value in the mutation.
-func (m *DatasourceMutation) Detail() (r schema.DatasourceDetail, exists bool) {
+func (m *DatasourceMutation) Detail() (r sub.DatasourceDetail, exists bool) {
 	v := m.detail
 	if v == nil {
 		return
@@ -1498,7 +1543,7 @@ func (m *DatasourceMutation) Detail() (r schema.DatasourceDetail, exists bool) {
 // If the Datasource object wasn't provided to the builder, the object is fetched
 // from the database.
 // An error is returned if the mutation operation is not UpdateOne, or database query fails.
-func (m *DatasourceMutation) OldDetail(ctx context.Context) (v schema.DatasourceDetail, err error) {
+func (m *DatasourceMutation) OldDetail(ctx context.Context) (v sub.DatasourceDetail, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, fmt.Errorf("OldDetail is allowed only on UpdateOne operations")
 	}
@@ -1688,14 +1733,14 @@ func (m *DatasourceMutation) SetField(name string, value ent.Value) error {
 		m.SetName(v)
 		return nil
 	case datasource.FieldType:
-		v, ok := value.(schema.DatasourceType)
+		v, ok := value.(sub.DatasourceType)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetType(v)
 		return nil
 	case datasource.FieldDetail:
-		v, ok := value.(schema.DatasourceDetail)
+		v, ok := value.(sub.DatasourceDetail)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1746,7 +1791,7 @@ func (m *DatasourceMutation) AddedField(name string) (ent.Value, bool) {
 func (m *DatasourceMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case datasource.FieldType:
-		v, ok := value.(schema.DatasourceType)
+		v, ok := value.(sub.DatasourceType)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

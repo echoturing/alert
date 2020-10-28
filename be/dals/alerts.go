@@ -21,7 +21,8 @@ func (i *impl) ListAlerts(ctx context.Context, status schema.AlertStatus, state 
 }
 
 func (i *impl) CreateAlert(ctx context.Context, alert *ent.Alert) (*ent.Alert, error) {
-	return i.client.Alert.Create().SetName(alert.Name).
+	return i.client.Alert.Create().
+		SetName(alert.Name).
 		SetChannels(alert.Channels).
 		SetRule(alert.Rule).
 		SetState(alert.State).
@@ -29,7 +30,8 @@ func (i *impl) CreateAlert(ctx context.Context, alert *ent.Alert) (*ent.Alert, e
 }
 
 func (i *impl) UpdateAlert(ctx context.Context, id int64, alert *ent.Alert) (*ent.Alert, error) {
-	return i.client.Alert.UpdateOneID(id).SetName(alert.Name).
+	return i.client.Alert.UpdateOneID(id).
+		SetName(alert.Name).
 		SetChannels(alert.Channels).
 		SetRule(alert.Rule).
 		SetState(alert.State).

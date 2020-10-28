@@ -1,4 +1,4 @@
-package schema
+package sub
 
 import (
 	"fmt"
@@ -20,7 +20,6 @@ const (
 )
 
 type Condition struct {
-	ID           int64     `json:"id"`
 	DatasourceID int64     `json:"datasourceId"`
 	Script       string    `json:"script"`
 	Benchmark    Benchmark `json:"benchmark"`
@@ -40,19 +39,19 @@ func (b *Benchmark) String() string {
 	default:
 		return fmt.Sprintf("unsupported benchmark:%d", b.Type)
 	case BenchmarkTypeEqual:
-		return fmt.Sprintf("=%f", b.SingleValue)
+		return fmt.Sprintf("!=%.2f", b.SingleValue)
 	case BenchmarkTypeGT:
-		return fmt.Sprintf(">%f", b.SingleValue)
+		return fmt.Sprintf("<=%.2f", b.SingleValue)
 	case BenchmarkTypeGTE:
-		return fmt.Sprintf(">=%f", b.SingleValue)
+		return fmt.Sprintf("<%.2f", b.SingleValue)
 	case BenchmarkTypeLT:
-		return fmt.Sprintf("<%f", b.SingleValue)
+		return fmt.Sprintf(">=%.2f", b.SingleValue)
 	case BenchmarkTypeLTE:
-		return fmt.Sprintf("<=%f", b.SingleValue)
+		return fmt.Sprintf(">%.2f", b.SingleValue)
 	case BenchmarkTypeRange:
-		return fmt.Sprintf("in (%f,%f)", b.Range.Lower, b.Range.Upper)
+		return fmt.Sprintf("not in (%.2f,%.2f)", b.Range.Lower, b.Range.Upper)
 	case BenchmarkTypeOutOfRange:
-		return fmt.Sprintf("exclude (%f,%f)", b.Range.Lower, b.Range.Upper)
+		return fmt.Sprintf("in (%.2f,%.2f)", b.Range.Lower, b.Range.Upper)
 	}
 }
 
@@ -64,10 +63,10 @@ type ConditionResult struct {
 }
 
 func (r *ConditionResult) String() string {
-	return fmt.Sprintf("%s should %s, but is %f", r.Name, r.Condition.Benchmark.String(), r.Value)
+	return fmt.Sprintf("%s should %s, but is %.2f", r.Name, r.Condition.Benchmark.String(), r.Value)
 }
 
-func (b *Benchmark) Valid(value float64) bool {
+func (b *Benchmark) NotValid(value float64) bool {
 	switch b.Type {
 	default:
 		return false

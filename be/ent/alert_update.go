@@ -10,6 +10,7 @@ import (
 	"github.com/echoturing/alert/ent/alert"
 	"github.com/echoturing/alert/ent/predicate"
 	"github.com/echoturing/alert/ent/schema"
+	"github.com/echoturing/alert/ent/schema/sub"
 	"github.com/facebook/ent/dialect/sql"
 	"github.com/facebook/ent/dialect/sql/sqlgraph"
 	"github.com/facebook/ent/schema/field"
@@ -42,7 +43,7 @@ func (au *AlertUpdate) SetChannels(si schema.ChannelIDS) *AlertUpdate {
 }
 
 // SetRule sets the rule field.
-func (au *AlertUpdate) SetRule(s schema.Rule) *AlertUpdate {
+func (au *AlertUpdate) SetRule(s sub.Rule) *AlertUpdate {
 	au.mutation.SetRule(s)
 	return au
 }
@@ -211,6 +212,12 @@ func (au *AlertUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: alert.FieldState,
 		})
 	}
+	if au.mutation.CreatedAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: alert.FieldCreatedAt,
+		})
+	}
 	if value, ok := au.mutation.UpdatedAt(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
@@ -249,7 +256,7 @@ func (auo *AlertUpdateOne) SetChannels(si schema.ChannelIDS) *AlertUpdateOne {
 }
 
 // SetRule sets the rule field.
-func (auo *AlertUpdateOne) SetRule(s schema.Rule) *AlertUpdateOne {
+func (auo *AlertUpdateOne) SetRule(s sub.Rule) *AlertUpdateOne {
 	auo.mutation.SetRule(s)
 	return auo
 }
@@ -414,6 +421,12 @@ func (auo *AlertUpdateOne) sqlSave(ctx context.Context) (_node *Alert, err error
 			Type:   field.TypeInt8,
 			Value:  value,
 			Column: alert.FieldState,
+		})
+	}
+	if auo.mutation.CreatedAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: alert.FieldCreatedAt,
 		})
 	}
 	if value, ok := auo.mutation.UpdatedAt(); ok {

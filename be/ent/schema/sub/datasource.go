@@ -1,4 +1,4 @@
-package schema
+package sub
 
 import (
 	"database/sql/driver"

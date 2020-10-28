@@ -1,4 +1,4 @@
-package schema
+package sub
 
 import (
 	"context"
@@ -15,7 +15,7 @@ func TestMySQLConfig_EvalScript(t *testing.T) {
 		DBName:   "alert",
 	}
 
-	result, err := config.EvalScript(context.Background(), "select count(1) as eng,100 as 中文 from api_key")
+	result, err := config.Evaluates(context.Background(), "select count(1) as eng,100 as 中文 from api_key")
 	if err != nil {
 		t.Errorf(err.Error())
 		return

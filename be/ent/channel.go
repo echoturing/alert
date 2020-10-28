@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/echoturing/alert/ent/channel"
-	"github.com/echoturing/alert/ent/schema"
+	"github.com/echoturing/alert/ent/schema/sub"
 	"github.com/facebook/ent/dialect/sql"
 )
 
@@ -20,9 +20,9 @@ type Channel struct {
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Type holds the value of the "type" field.
-	Type schema.ChannelType `json:"type,omitempty"`
+	Type sub.ChannelType `json:"type,omitempty"`
 	// Detail holds the value of the "detail" field.
-	Detail schema.ChannelDetail `json:"detail,omitempty"`
+	Detail sub.ChannelDetail `json:"detail,omitempty"`
 	// CreatedAt holds the value of the "createdAt" field.
 	CreatedAt time.Time `json:"createdAt,omitempty"`
 	// UpdatedAt holds the value of the "updatedAt" field.
@@ -32,12 +32,12 @@ type Channel struct {
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Channel) scanValues() []interface{} {
 	return []interface{}{
-		&sql.NullInt64{},        // id
-		&sql.NullString{},       // name
-		&sql.NullInt64{},        // type
-		&schema.ChannelDetail{}, // detail
-		&sql.NullTime{},         // createdAt
-		&sql.NullTime{},         // updatedAt
+		&sql.NullInt64{},     // id
+		&sql.NullString{},    // name
+		&sql.NullInt64{},     // type
+		&sub.ChannelDetail{}, // detail
+		&sql.NullTime{},      // createdAt
+		&sql.NullTime{},      // updatedAt
 	}
 }
 
@@ -61,9 +61,9 @@ func (c *Channel) assignValues(values ...interface{}) error {
 	if value, ok := values[1].(*sql.NullInt64); !ok {
 		return fmt.Errorf("unexpected type %T for field type", values[1])
 	} else if value.Valid {
-		c.Type = schema.ChannelType(value.Int64)
+		c.Type = sub.ChannelType(value.Int64)
 	}
-	if value, ok := values[2].(*schema.ChannelDetail); !ok {
+	if value, ok := values[2].(*sub.ChannelDetail); !ok {
 		return fmt.Errorf("unexpected type %T for field detail", values[2])
 	} else if value != nil {
 		c.Detail = *value

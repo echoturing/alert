@@ -9,6 +9,7 @@ import (
 
 	"github.com/echoturing/alert/ent/alert"
 	"github.com/echoturing/alert/ent/schema"
+	"github.com/echoturing/alert/ent/schema/sub"
 	"github.com/facebook/ent/dialect/sql"
 )
 
@@ -22,7 +23,7 @@ type Alert struct {
 	// Channels holds the value of the "channels" field.
 	Channels schema.ChannelIDS `json:"channels,omitempty"`
 	// Rule holds the value of the "rule" field.
-	Rule schema.Rule `json:"rule,omitempty"`
+	Rule sub.Rule `json:"rule,omitempty"`
 	// Status holds the value of the "status" field.
 	Status schema.AlertStatus `json:"status,omitempty"`
 	// State holds the value of the "state" field.
@@ -39,7 +40,7 @@ func (*Alert) scanValues() []interface{} {
 		&sql.NullInt64{},     // id
 		&sql.NullString{},    // name
 		&schema.ChannelIDS{}, // channels
-		&schema.Rule{},       // rule
+		&sub.Rule{},          // rule
 		&sql.NullInt64{},     // status
 		&sql.NullInt64{},     // state
 		&sql.NullTime{},      // createdAt
@@ -69,7 +70,7 @@ func (a *Alert) assignValues(values ...interface{}) error {
 	} else if value != nil {
 		a.Channels = *value
 	}
-	if value, ok := values[2].(*schema.Rule); !ok {
+	if value, ok := values[2].(*sub.Rule); !ok {
 		return fmt.Errorf("unexpected type %T for field rule", values[2])
 	} else if value != nil {
 		a.Rule = *value

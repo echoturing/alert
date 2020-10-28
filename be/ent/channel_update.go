@@ -9,7 +9,7 @@ import (
 
 	"github.com/echoturing/alert/ent/channel"
 	"github.com/echoturing/alert/ent/predicate"
-	"github.com/echoturing/alert/ent/schema"
+	"github.com/echoturing/alert/ent/schema/sub"
 	"github.com/facebook/ent/dialect/sql"
 	"github.com/facebook/ent/dialect/sql/sqlgraph"
 	"github.com/facebook/ent/schema/field"
@@ -36,20 +36,20 @@ func (cu *ChannelUpdate) SetName(s string) *ChannelUpdate {
 }
 
 // SetType sets the type field.
-func (cu *ChannelUpdate) SetType(st schema.ChannelType) *ChannelUpdate {
+func (cu *ChannelUpdate) SetType(st sub.ChannelType) *ChannelUpdate {
 	cu.mutation.ResetType()
 	cu.mutation.SetType(st)
 	return cu
 }
 
 // AddType adds st to type.
-func (cu *ChannelUpdate) AddType(st schema.ChannelType) *ChannelUpdate {
+func (cu *ChannelUpdate) AddType(st sub.ChannelType) *ChannelUpdate {
 	cu.mutation.AddType(st)
 	return cu
 }
 
 // SetDetail sets the detail field.
-func (cu *ChannelUpdate) SetDetail(sd schema.ChannelDetail) *ChannelUpdate {
+func (cu *ChannelUpdate) SetDetail(sd sub.ChannelDetail) *ChannelUpdate {
 	cu.mutation.SetDetail(sd)
 	return cu
 }
@@ -171,6 +171,12 @@ func (cu *ChannelUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: channel.FieldDetail,
 		})
 	}
+	if cu.mutation.CreatedAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: channel.FieldCreatedAt,
+		})
+	}
 	if value, ok := cu.mutation.UpdatedAt(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
@@ -203,20 +209,20 @@ func (cuo *ChannelUpdateOne) SetName(s string) *ChannelUpdateOne {
 }
 
 // SetType sets the type field.
-func (cuo *ChannelUpdateOne) SetType(st schema.ChannelType) *ChannelUpdateOne {
+func (cuo *ChannelUpdateOne) SetType(st sub.ChannelType) *ChannelUpdateOne {
 	cuo.mutation.ResetType()
 	cuo.mutation.SetType(st)
 	return cuo
 }
 
 // AddType adds st to type.
-func (cuo *ChannelUpdateOne) AddType(st schema.ChannelType) *ChannelUpdateOne {
+func (cuo *ChannelUpdateOne) AddType(st sub.ChannelType) *ChannelUpdateOne {
 	cuo.mutation.AddType(st)
 	return cuo
 }
 
 // SetDetail sets the detail field.
-func (cuo *ChannelUpdateOne) SetDetail(sd schema.ChannelDetail) *ChannelUpdateOne {
+func (cuo *ChannelUpdateOne) SetDetail(sd sub.ChannelDetail) *ChannelUpdateOne {
 	cuo.mutation.SetDetail(sd)
 	return cuo
 }
@@ -334,6 +340,12 @@ func (cuo *ChannelUpdateOne) sqlSave(ctx context.Context) (_node *Channel, err e
 			Type:   field.TypeString,
 			Value:  value,
 			Column: channel.FieldDetail,
+		})
+	}
+	if cuo.mutation.CreatedAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: channel.FieldCreatedAt,
 		})
 	}
 	if value, ok := cuo.mutation.UpdatedAt(); ok {
