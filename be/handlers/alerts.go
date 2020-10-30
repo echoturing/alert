@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/labstack/echo"
@@ -29,6 +28,7 @@ func (i *impl) CreateAlert(c echo.Context) (interface{}, error) {
 		Channels: req.Channel,
 		Rule:     *req.Rule,
 		Status:   schema.AlertStatus(1),
+		State:    schema.AlertStateOK,
 	})
 	if err != nil {
 		return nil, err
@@ -69,8 +69,6 @@ func (i *impl) UpdateAlert(c echo.Context) (interface{}, error) {
 	if err := c.Bind(req); err != nil {
 		return nil, err
 	}
-
-	fmt.Println(req.Rule.Conditions[0].Condition.Script)
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 0, 64)
 	if err != nil {

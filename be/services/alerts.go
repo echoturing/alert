@@ -8,6 +8,7 @@ import (
 	"github.com/echoturing/log"
 
 	"github.com/echoturing/alert/ent"
+	alertFields "github.com/echoturing/alert/ent/alert"
 	"github.com/echoturing/alert/ent/schema"
 	"github.com/echoturing/alert/ent/schema/sub"
 )
@@ -43,6 +44,10 @@ func (i *impl) UpdateAlert(ctx context.Context, id int64, update *UpdateAlertReq
 		Channels: update.Channels,
 		Rule:     *update.Rule,
 		Status:   update.Status,
+	}, []string{alertFields.FieldName,
+		alertFields.FieldChannels,
+		alertFields.FieldRule,
+		alertFields.FieldStatus,
 	})
 	if err != nil {
 		return nil, err
@@ -158,43 +163,55 @@ func (i *impl) StartAlert(ctx context.Context, alert *ent.Alert) error {
 					continue
 				}
 				log.InfoWithContext(ctx, "alert", "res", ruleResult)
-				for _, channelID := range alert.Channels {
-					channel, err := i.dal.GetChannelByID(ctx, channelID)
+				current := ruleResultToAlertState(ruleResult, alert)
+				prev := alert.State
+				if current != prev {
+					alert.State = current
+					alert, err = i.dal.UpdateAlert(ctx, alert.ID, alert, []string{alertFields.FieldState})
 					if err != nil {
-						log.ErrorWithContext(ctx, "get channel by id error", "err", err.Error())
+						log.ErrorWithContext(ctx, "update alert error", "err", err.Error())
 						continue
 					}
-					if ruleResult.Qualified {
-						//
-					} else {
-						// send alert to channels and update alert status
-						err := i.sendAlert(ctx, alert, channel, ruleResult)
-						if err != nil {
-							log.ErrorWithContext(ctx, "send alert error", "err", err.Error())
-							continue
+					if alert.State == schema.AlertStateAlerting {
+						for _, channelID := range alert.Channels {
+							channel, err := i.dal.GetChannelByID(ctx, channelID)
+							if err != nil {
+								log.ErrorWithContext(ctx, "get channel by id error", "err", err.Error())
+								continue
+							}
+							err = i.sendAlert(ctx, alert, channel, ruleResult)
+							if err != nil {
+								log.ErrorWithContext(ctx, "send alert error", "err", err.Error())
+								continue
+							}
 						}
 					}
 				}
-				alert.State = ruleResultToAlertState(ruleResult)
-				_, err = i.dal.UpdateAlert(ctx, alert.ID, alert)
-				if err != nil {
-					log.ErrorWithContext(ctx, "update alert error", "err", err.Error())
-					continue
-				}
+
 			}
 		}
 	}()
 	return nil
 }
 
-func ruleResultToAlertState(result *sub.RuleResult) schema.AlertState {
+func ruleResultToAlertState(result *sub.RuleResult, alert *ent.Alert) schema.AlertState {
 	switch result.Qualified {
 	default:
-		// TODO: status may be pending...but now just has two status
 		return schema.AlertStateOK
 	case true:
 		return schema.AlertStateOK
 	case false:
+		if alert.Rule.For == 0 {
+			return schema.AlertStateAlerting
+		}
+		if alert.State == schema.AlertStateOK {
+			return schema.AlertStatusPending
+		}
+		if alert.State == schema.AlertStatusPending {
+			if time.Now().Unix()-alert.UpdatedAt.Unix() < alert.Rule.For {
+				return schema.AlertStatusPending
+			}
+		}
 		return schema.AlertStateAlerting
 	}
 }

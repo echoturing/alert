@@ -16,7 +16,7 @@ type Interface interface {
 
 	ListAlerts(ctx context.Context, status schema.AlertStatus, alertStatus schema.AlertState) ([]*ent.Alert, error)
 	CreateAlert(ctx context.Context, alert *ent.Alert) (*ent.Alert, error)
-	UpdateAlert(ctx context.Context, id int64, alert *ent.Alert) (*ent.Alert, error)
+	UpdateAlert(ctx context.Context, id int64, a *ent.Alert, updateKeys []string) (*ent.Alert, error)
 	GetAlertByID(ctx context.Context, id int64) (*ent.Alert, error)
 
 	GetChannelByID(ctx context.Context, id int64) (*ent.Channel, error)
