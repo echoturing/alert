@@ -44,7 +44,8 @@ func (i *impl) UpdateAlert(ctx context.Context, id int64, update *UpdateAlertReq
 		Channels: update.Channels,
 		Rule:     *update.Rule,
 		Status:   update.Status,
-	}, []string{alertFields.FieldName,
+	}, []string{
+		alertFields.FieldName,
 		alertFields.FieldChannels,
 		alertFields.FieldRule,
 		alertFields.FieldStatus,
