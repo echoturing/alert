@@ -99,7 +99,7 @@ func injectNameToResult(drs []*DatasourceResult) []*DatasourceResult {
 		if dr.Name == nameKey {
 			for _, innerDr := range drs {
 				if innerDr.Name != nameKey {
-					innerDr.Name = dr.ValueString + ":" + innerDr.Name
+					innerDr.Name = dr.ValueString + "\t" + innerDr.Name
 					newRes = append(newRes, innerDr)
 				}
 			}

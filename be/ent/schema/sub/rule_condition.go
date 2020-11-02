@@ -66,6 +66,7 @@ func (r *ConditionResult) String() string {
 	return fmt.Sprintf("%s should %s, but is %.2f", r.Name, r.Condition.Benchmark.String(), r.Value)
 }
 
+// NotValid test the benchmark result is not valid
 func (b *Benchmark) NotValid(value float64) bool {
 	switch b.Type {
 	default:

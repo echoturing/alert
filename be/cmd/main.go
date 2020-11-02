@@ -53,7 +53,6 @@ func main() {
 		fmt.Println("db conn error")
 		return
 	}
-
 	driver := entSql.OpenDB(dialect.MySQL, dbConn)
 	entClient := ent.NewClient(ent.Driver(driver))
 

@@ -162,7 +162,6 @@ func (i *impl) StartAlert(ctx context.Context, alert *ent.Alert) error {
 					log.ErrorWithContext(ctx, "evaluate error", "err", err.Error())
 					continue
 				}
-				log.InfoWithContext(ctx, "alert", "res", ruleResult)
 				current := ruleResultToAlertState(ruleResult, alert)
 				prev := alert.State
 				if current != prev {
@@ -187,7 +186,6 @@ func (i *impl) StartAlert(ctx context.Context, alert *ent.Alert) error {
 						}
 					}
 				}
-
 			}
 		}
 	}()

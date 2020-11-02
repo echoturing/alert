@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/echoturing/log"
 	"github.com/labstack/echo"
 )
 
@@ -24,6 +25,7 @@ func (w *Webhook) SendWebhookAlert(ctx context.Context, msg *WebhookMessage) err
 		return err
 	}
 	// TODO: temp ignore response
+	log.DebugWithContext(ctx, "send post", "data", string(data), "url", w.URL)
 	_, err = http.DefaultClient.Post(w.URL, echo.MIMEApplicationJSON, bytes.NewBuffer(data))
 	if err != nil {
 		return err

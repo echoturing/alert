@@ -60,7 +60,7 @@ type RuleResult struct {
 }
 
 func (rr *RuleResult) String() string {
-	res := fmt.Sprintf("alerting:%t\n", rr.Qualified)
+	res := fmt.Sprintf("alerting:%t\n", !rr.Qualified)
 	for _, c := range rr.Detail {
 		if !c.Valid {
 			res += c.String() + ";\n"
