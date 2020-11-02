@@ -126,8 +126,8 @@ func (d *MySQLConfig) Evaluates(ctx context.Context, script string) ([]*Datasour
 		return nil, err
 	}
 	results := initResults(columns)
-
 	for rows.Next() {
+		// only care about one row result
 		err = rows.Scan(resultsToValueInterfacePointer(results)...)
 		if err != nil {
 			return nil, err
@@ -137,6 +137,5 @@ func (d *MySQLConfig) Evaluates(ctx context.Context, script string) ([]*Datasour
 		return nil, err
 	}
 	results = injectNameToResult(results)
-	fmt.Println(results[0].Name, results[0].Value)
 	return results, nil
 }

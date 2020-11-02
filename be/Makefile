@@ -9,12 +9,8 @@ fmt:
 
 .PHONY: run
 run:
-	@go run ./cmd/main.go
+	@go run ./cmd/main.go --mysqlHost=127.0.0.1  --mysqlUser=root
 
-
-.PHONY: migrate
-migrate:
-	@go run ./cmd/main.go  --migrate=true
 
 .PHONY: build
 build:
