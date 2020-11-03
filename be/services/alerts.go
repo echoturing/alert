@@ -100,9 +100,9 @@ func (i *impl) evaluatesRule(ctx context.Context, rule sub.Rule) (*sub.RuleResul
 		default:
 			log.ErrorWithContext(ctx, "unknown condition type", "condition", condition)
 		case sub.ConditionRelationTypeOr, sub.ConditionRelationTypeUndefined:
-			final.Qualified = final.Qualified || ruleResult.Qualified
+			final.Alerting = final.Alerting || ruleResult.Alerting
 		case sub.ConditionRelationTypeAnd:
-			final.Qualified = final.Qualified && ruleResult.Qualified
+			final.Alerting = final.Alerting && ruleResult.Alerting
 		}
 		final.Detail = append(final.Detail, ruleResult.Detail...)
 	}
@@ -119,28 +119,27 @@ func (i *impl) evaluatesCondition(ctx context.Context, condition *sub.Condition)
 	if err != nil {
 		return nil, err
 	}
-
 	results := make([]*sub.ConditionResult, 0, len(datasourceResults))
 	for _, dr := range datasourceResults {
-		if sub.CanBeNumeric(dr.Kind) && dr.Msg == "" {
-			results = append(results, &sub.ConditionResult{
-				Name:      dr.Name,
-				Value:     dr.ValueNumeric,
-				Valid:     !condition.Benchmark.NotValid(dr.ValueNumeric),
-				Condition: condition,
-			})
-		}
+		//if sub.CanBeNumeric(dr.Kind) {
+		results = append(results, &sub.ConditionResult{
+			Name:      dr.Name,
+			Value:     dr.ValueNumeric,
+			Valid:     !condition.Benchmark.NotValid(dr.ValueNumeric),
+			Condition: condition,
+		})
+		//}
 	}
 	return results, nil
 }
 
 func mergeConditionResultToRuleResult(tx context.Context, results []*sub.ConditionResult) *sub.RuleResult {
 	rr := &sub.RuleResult{
-		Qualified: true,
+		Alerting: false,
 	}
 	for _, result := range results {
 		if !result.Valid {
-			rr.Qualified = false
+			rr.Alerting = true
 		}
 		rr.Detail = append(rr.Detail, result)
 	}
@@ -156,36 +155,36 @@ func (i *impl) StartAlert(ctx context.Context, alert *ent.Alert) error {
 	ticker := time.NewTicker(time.Second * time.Duration(alert.Rule.Interval))
 	i.alerts[alert.ID] = ticker
 	go func() {
-		for {
+		for range ticker.C {
 			ctx := log.NewDefaultContext()
-			for range ticker.C {
-				ruleResult, err := i.evaluatesRule(ctx, alert.Rule)
+			ruleResult, err := i.evaluatesRule(ctx, alert.Rule)
+			if err != nil {
+				log.ErrorWithContext(ctx, "evaluate error", "err", err.Error())
+				continue
+			}
+			log.DebugWithContext(ctx, "eval rule", "result", ruleResult)
+			current := ruleResultToAlertState(ruleResult, alert)
+			prev := alert.State
+			if current != prev {
+				alert.State = current
+				alert, err = i.dal.UpdateAlert(ctx, alert.ID, alert, []string{alertFields.FieldState})
 				if err != nil {
-					log.ErrorWithContext(ctx, "evaluate error", "err", err.Error())
+					log.ErrorWithContext(ctx, "update alert error", "err", err.Error())
 					continue
 				}
-				current := ruleResultToAlertState(ruleResult, alert)
-				prev := alert.State
-				if current != prev {
-					alert.State = current
-					alert, err = i.dal.UpdateAlert(ctx, alert.ID, alert, []string{alertFields.FieldState})
+			}
+			// always alert when state is alerting
+			if alert.State == schema.AlertStateAlerting {
+				for _, channelID := range alert.Channels {
+					channel, err := i.dal.GetChannelByID(ctx, channelID)
 					if err != nil {
-						log.ErrorWithContext(ctx, "update alert error", "err", err.Error())
+						log.ErrorWithContext(ctx, "get channel by id error", "err", err.Error())
 						continue
 					}
-					if alert.State == schema.AlertStateAlerting {
-						for _, channelID := range alert.Channels {
-							channel, err := i.dal.GetChannelByID(ctx, channelID)
-							if err != nil {
-								log.ErrorWithContext(ctx, "get channel by id error", "err", err.Error())
-								continue
-							}
-							err = i.sendAlert(ctx, alert, channel, ruleResult)
-							if err != nil {
-								log.ErrorWithContext(ctx, "send alert error", "err", err.Error())
-								continue
-							}
-						}
+					err = i.sendAlert(ctx, alert, channel, ruleResult)
+					if err != nil {
+						log.ErrorWithContext(ctx, "send alert error", "err", err.Error())
+						continue
 					}
 				}
 			}
@@ -195,12 +194,12 @@ func (i *impl) StartAlert(ctx context.Context, alert *ent.Alert) error {
 }
 
 func ruleResultToAlertState(result *sub.RuleResult, alert *ent.Alert) schema.AlertState {
-	switch result.Qualified {
+	switch result.Alerting {
 	default:
 		return schema.AlertStateOK
-	case true:
-		return schema.AlertStateOK
 	case false:
+		return schema.AlertStateOK
+	case true:
 		if alert.Rule.For == 0 {
 			return schema.AlertStateAlerting
 		}
@@ -233,7 +232,7 @@ func (i *impl) sendAlert(ctx context.Context, alert *ent.Alert, channel *ent.Cha
 	case sub.ChannelTypeWebhook:
 		return channel.Detail.Webhook.SendWebhookAlert(ctx, &sub.WebhookMessage{
 			Title:   alert.Name,
-			Message: result.String(),
+			Message: result.AlertMessage(),
 		})
 	}
 }

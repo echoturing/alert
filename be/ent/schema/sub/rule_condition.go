@@ -63,7 +63,10 @@ type ConditionResult struct {
 }
 
 func (r *ConditionResult) String() string {
-	return fmt.Sprintf("%s should %s, but is %.2f", r.Name, r.Condition.Benchmark.String(), r.Value)
+	if !r.Valid {
+		return fmt.Sprintf("%s should %s, but is %.2f", r.Name, r.Condition.Benchmark.String(), r.Value)
+	}
+	return fmt.Sprintf("%s should %s, and is %.2f", r.Name, r.Condition.Benchmark.String(), r.Value)
 }
 
 // NotValid test the benchmark result is not valid

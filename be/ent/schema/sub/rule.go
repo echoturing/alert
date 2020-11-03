@@ -55,12 +55,22 @@ func (a ConditionRelation) Value() (driver.Value, error) {
 }
 
 type RuleResult struct {
-	Qualified bool               `json:"qualified"`
-	Detail    []*ConditionResult `json:"detail"`
+	Alerting bool               `json:"alerting"`
+	Detail   []*ConditionResult `json:"detail"`
 }
 
 func (rr *RuleResult) String() string {
-	res := fmt.Sprintf("alerting:%t\n", !rr.Qualified)
+	res := fmt.Sprintf("alerting:%t\n", rr.Alerting)
+	for _, c := range rr.Detail {
+		if c.Valid {
+			res += c.String() + ";\n"
+		}
+	}
+	return res
+}
+
+func (rr *RuleResult) AlertMessage() string {
+	res := fmt.Sprintf("alerting:%t\n", rr.Alerting)
 	for _, c := range rr.Detail {
 		if !c.Valid {
 			res += c.String() + ";\n"

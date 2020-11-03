@@ -15,7 +15,7 @@ func TestMySQLConfig_EvalScript(t *testing.T) {
 		DBName:   "alert",
 	}
 
-	result, err := config.Evaluates(context.Background(), "SELECT CONVERT(12.9,DECIMAL(10,2))")
+	result, err := config.Evaluates(context.Background(), "select * from api_key")
 	if err != nil {
 		t.Errorf(err.Error())
 		return

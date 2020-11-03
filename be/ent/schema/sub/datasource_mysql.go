@@ -78,7 +78,7 @@ func (dr *DatasourceResult) String() string {
 }
 
 func (dr *DatasourceResult) TryConvertToFloat() {
-	if dr.Kind == reflect.Slice {
+	if dr.Kind == reflect.Slice || dr.Kind == reflect.Struct {
 		dataStr := string(dr.ValueInterface.([]byte))
 		floatData, err := strconv.ParseFloat(dataStr, 64)
 		if err != nil {
@@ -103,13 +103,6 @@ func initResults(columns []*sql.ColumnType) []*DatasourceResult {
 
 func isNumeric(i reflect.Kind) bool {
 	return i >= reflect.Bool && i <= reflect.Float32
-}
-
-func CanBeNumeric(i reflect.Kind) bool {
-	if isNumeric(i) {
-		return true
-	}
-	return i == reflect.Slice
 }
 
 // resultsToValueInterfacePointer get the result value pointer
