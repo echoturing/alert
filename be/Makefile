@@ -15,3 +15,9 @@ run:
 .PHONY: build
 build:
 	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags="timetzdata" -o .build/alert-be-linux cmd/main.go
+
+
+.PHONY: docker
+docker: build
+	@docker build .  -t docker-registry.shmiao.net/open-source/alert:latest
+	@docker push docker-registry.shmiao.net/open-source/alert:latest

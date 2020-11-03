@@ -1,12 +1,12 @@
 version: "3.8"
 services:
   be:
-    build: ./be/.
+    image: docker-registry.shmiao.net/open-source/alert:latest
     depends_on:
       - mysql
     command: [ "./wait-for-it.sh","mysql:3306","--","./be/alert-be-linux" ]
     ports:
-    - 8899:8899
+      - 8899:8899
   mysql:
     image: mysql:5.7
     restart: always
