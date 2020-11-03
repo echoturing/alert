@@ -79,13 +79,15 @@ func (dr *DatasourceResult) String() string {
 
 func (dr *DatasourceResult) TryConvertToFloat() {
 	if dr.Kind == reflect.Slice || dr.Kind == reflect.Struct {
-		dataStr := string(dr.ValueInterface.([]byte))
-		floatData, err := strconv.ParseFloat(dataStr, 64)
-		if err != nil {
-			dr.Msg = err.Error()
-			return
+		if bs, ok := dr.ValueInterface.([]byte); ok {
+			dataStr := string(bs)
+			floatData, err := strconv.ParseFloat(dataStr, 64)
+			if err != nil {
+				dr.Msg = err.Error()
+				return
+			}
+			dr.ValueNumeric = floatData
 		}
-		dr.ValueNumeric = floatData
 	}
 }
 
