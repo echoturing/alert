@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -35,7 +37,7 @@ func newMysqlConnection(
 		Collation:            "utf8mb4_general_ci",
 		Loc:                  loc,
 		MaxAllowedPacket:     4 << 20, // 4 MiB
-		Timeout:              time.Second * 3,
+		Timeout:              time.Second * 5,
 		ReadTimeout:          time.Minute,
 		WriteTimeout:         time.Minute,
 		InterpolateParams:    true,
@@ -62,52 +64,68 @@ func (d *MySQLConfig) Connect(ctx context.Context) error {
 	return db.Ping()
 }
 
+// DatasourceResult only support numeric types
 type DatasourceResult struct {
-	Name        string  `json:"name"`
-	Value       float64 `json:"value"`
-	ValueString string  `json:"valueString"`
+	Name           string       `json:"name"`
+	Kind           reflect.Kind `json:"kind"`
+	ValueNumeric   float64      `json:"valueNumeric"`
+	ValueInterface interface{}  `json:"valueInterface"`
+	Msg            string       `json:"-"`
 }
 
-const nameKey = "name"
+func (dr *DatasourceResult) String() string {
+	return fmt.Sprintf("%s|%s|%f|%s|%s", dr.Name, dr.Kind, dr.ValueNumeric, dr.ValueInterface, dr.Msg)
+}
 
-func initResults(columns []string) []*DatasourceResult {
+func (dr *DatasourceResult) TryConvertToFloat() {
+	if dr.Kind == reflect.Slice {
+		dataStr := string(dr.ValueInterface.([]byte))
+		floatData, err := strconv.ParseFloat(dataStr, 64)
+		if err != nil {
+			dr.Msg = err.Error()
+			return
+		}
+		dr.ValueNumeric = floatData
+	}
+}
+
+func initResults(columns []*sql.ColumnType) []*DatasourceResult {
 	result := make([]*DatasourceResult, 0, len(columns))
 	for i := 0; i < len(columns); i++ {
 		dr := &DatasourceResult{
-			Name: columns[i],
+			Name: columns[i].Name(),
+			Kind: columns[i].ScanType().Kind(),
 		}
 		result = append(result, dr)
 	}
 	return result
 }
 
+func isNumeric(i reflect.Kind) bool {
+	return i >= reflect.Bool && i <= reflect.Float32
+}
+
+func CanBeNumeric(i reflect.Kind) bool {
+	if isNumeric(i) {
+		return true
+	}
+	return i == reflect.Slice
+}
+
+// resultsToValueInterfacePointer get the result value pointer
 func resultsToValueInterfacePointer(results []*DatasourceResult) []interface{} {
 	rt := make([]interface{}, 0, len(results))
 	for _, result := range results {
-		if result.Name == nameKey {
-			rt = append(rt, &result.ValueString)
+		if isNumeric(result.Kind) {
+			rt = append(rt, &result.ValueNumeric)
 		} else {
-			rt = append(rt, &result.Value)
+			rt = append(rt, &result.ValueInterface)
 		}
 	}
 	return rt
 }
 
-func injectNameToResult(drs []*DatasourceResult) []*DatasourceResult {
-	newRes := make([]*DatasourceResult, 0)
-	for _, dr := range drs {
-		if dr.Name == nameKey {
-			for _, innerDr := range drs {
-				if innerDr.Name != nameKey {
-					innerDr.Name = dr.ValueString + "\t" + innerDr.Name
-					newRes = append(newRes, innerDr)
-				}
-			}
-			break
-		}
-	}
-	return newRes
-}
+var errNoData = fmt.Errorf("no data found")
 
 func (d *MySQLConfig) Evaluates(ctx context.Context, script string) ([]*DatasourceResult, error) {
 	db, err := newMysqlConnection(d.User, d.Password, d.Host, d.Port, d.DBName)
@@ -121,21 +139,28 @@ func (d *MySQLConfig) Evaluates(ctx context.Context, script string) ([]*Datasour
 	if err != nil {
 		return nil, err
 	}
-	columns, err := rows.Columns()
+	columnTypes, err := rows.ColumnTypes()
 	if err != nil {
 		return nil, err
 	}
-	results := initResults(columns)
+	var results []*DatasourceResult
 	for rows.Next() {
-		// only care about one row result
+		results = initResults(columnTypes)
+		// only care about first row result
 		err = rows.Scan(resultsToValueInterfacePointer(results)...)
 		if err != nil {
 			return nil, err
 		}
+		break
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	results = injectNameToResult(results)
+	if len(results) == 0 {
+		return nil, errNoData
+	}
+	for _, i := range results {
+		i.TryConvertToFloat()
+	}
 	return results, nil
 }

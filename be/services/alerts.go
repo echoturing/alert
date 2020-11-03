@@ -122,13 +122,14 @@ func (i *impl) evaluatesCondition(ctx context.Context, condition *sub.Condition)
 
 	results := make([]*sub.ConditionResult, 0, len(datasourceResults))
 	for _, dr := range datasourceResults {
-		results = append(results, &sub.ConditionResult{
-			Name:      dr.Name,
-			Value:     dr.Value,
-			Valid:     !condition.Benchmark.NotValid(dr.Value),
-			Condition: condition,
-		})
-
+		if sub.CanBeNumeric(dr.Kind) && dr.Msg == "" {
+			results = append(results, &sub.ConditionResult{
+				Name:      dr.Name,
+				Value:     dr.ValueNumeric,
+				Valid:     !condition.Benchmark.NotValid(dr.ValueNumeric),
+				Condition: condition,
+			})
+		}
 	}
 	return results, nil
 }
