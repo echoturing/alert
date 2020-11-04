@@ -56,15 +56,16 @@ func (b *Benchmark) String() string {
 }
 
 type ConditionResult struct {
-	Name      string     `json:"name"`
-	Value     float64    `json:"value"`
-	Valid     bool       `json:"valid"` // the result is satisfy the condition?
-	Condition *Condition `json:"condition"`
+	Name             string            `json:"name"`
+	Value            float64           `json:"value"`
+	DatasourceResult *DatasourceResult `json:"datasourceResult"`
+	Alerting         bool              `json:"alerting"`
+	Condition        *Condition        `json:"condition"`
 }
 
 func (r *ConditionResult) String() string {
-	if !r.Valid {
-		return fmt.Sprintf("%s should %s, but is %.2f", r.Name, r.Condition.Benchmark.String(), r.Value)
+	if r.Alerting {
+		return fmt.Sprintf("%s should %s, but is %.4f", r.Name, r.Condition.Benchmark.String(), r.Value)
 	}
 	return fmt.Sprintf("%s should %s, and is %.2f", r.Name, r.Condition.Benchmark.String(), r.Value)
 }

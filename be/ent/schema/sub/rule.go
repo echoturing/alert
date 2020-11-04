@@ -62,9 +62,7 @@ type RuleResult struct {
 func (rr *RuleResult) String() string {
 	res := fmt.Sprintf("alerting:%t\n", rr.Alerting)
 	for _, c := range rr.Detail {
-		if c.Valid {
-			res += c.String() + ";\n"
-		}
+		res += c.String() + ";\n"
 	}
 	return res
 }
@@ -72,7 +70,7 @@ func (rr *RuleResult) String() string {
 func (rr *RuleResult) AlertMessage() string {
 	res := fmt.Sprintf("alerting:%t\n", rr.Alerting)
 	for _, c := range rr.Detail {
-		if !c.Valid {
+		if c.Alerting {
 			res += c.String() + ";\n"
 		}
 	}

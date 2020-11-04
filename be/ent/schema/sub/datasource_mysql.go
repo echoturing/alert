@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
-	"strconv"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -64,33 +63,6 @@ func (d *MySQLConfig) Connect(ctx context.Context) error {
 	return db.Ping()
 }
 
-// DatasourceResult only support numeric types
-type DatasourceResult struct {
-	Name           string       `json:"name"`
-	Kind           reflect.Kind `json:"kind"`
-	ValueNumeric   float64      `json:"valueNumeric"`
-	ValueInterface interface{}  `json:"valueInterface"`
-	Msg            string       `json:"-"`
-}
-
-func (dr *DatasourceResult) String() string {
-	return fmt.Sprintf("%s|%s|%f|%s|%s", dr.Name, dr.Kind, dr.ValueNumeric, dr.ValueInterface, dr.Msg)
-}
-
-func (dr *DatasourceResult) TryConvertToFloat() {
-	if dr.Kind == reflect.Slice || dr.Kind == reflect.Struct {
-		if bs, ok := dr.ValueInterface.([]byte); ok {
-			dataStr := string(bs)
-			floatData, err := strconv.ParseFloat(dataStr, 64)
-			if err != nil {
-				dr.Msg = err.Error()
-				return
-			}
-			dr.ValueNumeric = floatData
-		}
-	}
-}
-
 func initResults(columns []*sql.ColumnType) []*DatasourceResult {
 	result := make([]*DatasourceResult, 0, len(columns))
 	for i := 0; i < len(columns); i++ {
@@ -103,8 +75,15 @@ func initResults(columns []*sql.ColumnType) []*DatasourceResult {
 	return result
 }
 
+func CanBeNumeric(i reflect.Kind) bool {
+	if isNumeric(i) {
+		return true
+	}
+	return i == reflect.Struct || i == reflect.Slice
+}
+
 func isNumeric(i reflect.Kind) bool {
-	return i >= reflect.Bool && i <= reflect.Float32
+	return i >= reflect.Bool && i <= reflect.Float64
 }
 
 // resultsToValueInterfacePointer get the result value pointer
@@ -113,6 +92,7 @@ func resultsToValueInterfacePointer(results []*DatasourceResult) []interface{} {
 	for _, result := range results {
 		if isNumeric(result.Kind) {
 			rt = append(rt, &result.ValueNumeric)
+			result.IsMetrics = true
 		} else {
 			rt = append(rt, &result.ValueInterface)
 		}

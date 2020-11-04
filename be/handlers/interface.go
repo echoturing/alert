@@ -10,6 +10,7 @@ type Interface interface {
 	ListAlerts(context echo.Context) (interface{}, error)
 	CreateAlert(context echo.Context) (interface{}, error)
 	UpdateAlert(context echo.Context) (interface{}, error)
+	GetAlertResult(context echo.Context) (interface{}, error)
 
 	ListDatasource(context echo.Context) (interface{}, error)
 	CreateDatasource(context echo.Context) (interface{}, error)

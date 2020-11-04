@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/echoturing/log"
 	"github.com/facebook/ent/dialect"
@@ -41,6 +42,7 @@ func parseFlag() {
 }
 
 func main() {
+	*time.Local = *common.DefaultLoc
 	parseFlag()
 	dbConn, err := common.NewMysqlConnection(
 		mysqlUser,

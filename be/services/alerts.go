@@ -15,7 +15,11 @@ import (
 
 func (i *impl) CreateAlert(ctx context.Context, alert *ent.Alert) (*ent.Alert, error) {
 	// TODO:validate data field
-	alert, err := i.dal.CreateAlert(ctx, alert)
+	_, err := i.evaluatesRule(ctx, alert.Rule)
+	if err != nil {
+		return nil, err
+	}
+	alert, err = i.dal.CreateAlert(ctx, alert)
 	if err != nil {
 		return nil, err
 	}
@@ -89,20 +93,29 @@ func (i *impl) StartAllAlert(ctx context.Context) error {
 }
 
 func (i *impl) evaluatesRule(ctx context.Context, rule sub.Rule) (*sub.RuleResult, error) {
-	var final sub.RuleResult
+	var (
+		final sub.RuleResult
+		init  bool
+	)
+
 	for _, condition := range rule.Conditions {
 		conditionResults, err := i.evaluatesCondition(ctx, condition.Condition)
 		if err != nil {
 			return nil, err
 		}
 		ruleResult := mergeConditionResultToRuleResult(ctx, conditionResults)
-		switch condition.Type {
-		default:
-			log.ErrorWithContext(ctx, "unknown condition type", "condition", condition)
-		case sub.ConditionRelationTypeOr, sub.ConditionRelationTypeUndefined:
-			final.Alerting = final.Alerting || ruleResult.Alerting
-		case sub.ConditionRelationTypeAnd:
-			final.Alerting = final.Alerting && ruleResult.Alerting
+		if !init {
+			init = true
+			final.Alerting = ruleResult.Alerting
+		} else {
+			switch condition.Type {
+			default:
+				log.ErrorWithContext(ctx, "unknown condition type", "condition", condition)
+			case sub.ConditionRelationTypeOr, sub.ConditionRelationTypeUndefined:
+				final.Alerting = final.Alerting || ruleResult.Alerting
+			case sub.ConditionRelationTypeAnd:
+				final.Alerting = final.Alerting && ruleResult.Alerting
+			}
 		}
 		final.Detail = append(final.Detail, ruleResult.Detail...)
 	}
@@ -121,14 +134,15 @@ func (i *impl) evaluatesCondition(ctx context.Context, condition *sub.Condition)
 	}
 	results := make([]*sub.ConditionResult, 0, len(datasourceResults))
 	for _, dr := range datasourceResults {
-		//if sub.CanBeNumeric(dr.Kind) {
-		results = append(results, &sub.ConditionResult{
-			Name:      dr.Name,
-			Value:     dr.ValueNumeric,
-			Valid:     !condition.Benchmark.NotValid(dr.ValueNumeric),
-			Condition: condition,
-		})
-		//}
+		if dr.IsMetrics {
+			results = append(results, &sub.ConditionResult{
+				Name:             dr.Name,
+				Value:            dr.ValueNumeric,
+				DatasourceResult: dr,
+				Alerting:         condition.Benchmark.NotValid(dr.ValueNumeric),
+				Condition:        condition,
+			})
+		}
 	}
 	return results, nil
 }
@@ -138,7 +152,7 @@ func mergeConditionResultToRuleResult(tx context.Context, results []*sub.Conditi
 		Alerting: false,
 	}
 	for _, result := range results {
-		if !result.Valid {
+		if result.Alerting {
 			rr.Alerting = true
 		}
 		rr.Detail = append(rr.Detail, result)
@@ -162,7 +176,6 @@ func (i *impl) StartAlert(ctx context.Context, alert *ent.Alert) error {
 				log.ErrorWithContext(ctx, "evaluate error", "err", err.Error())
 				continue
 			}
-			log.DebugWithContext(ctx, "eval rule", "result", ruleResult)
 			current := ruleResultToAlertState(ruleResult, alert)
 			prev := alert.State
 			if current != prev {
@@ -173,9 +186,11 @@ func (i *impl) StartAlert(ctx context.Context, alert *ent.Alert) error {
 					continue
 				}
 			}
+			log.DebugWithContext(ctx, "eval rule", "result", ruleResult, "alert", alert.ID, "status", alert.Status, "state", alert.State)
 			// always alert when state is alerting
 			if alert.State == schema.AlertStateAlerting {
 				for _, channelID := range alert.Channels {
+
 					channel, err := i.dal.GetChannelByID(ctx, channelID)
 					if err != nil {
 						log.ErrorWithContext(ctx, "get channel by id error", "err", err.Error())
@@ -235,4 +250,16 @@ func (i *impl) sendAlert(ctx context.Context, alert *ent.Alert, channel *ent.Cha
 			Message: result.AlertMessage(),
 		})
 	}
+}
+
+func (i *impl) GetAlertResult(ctx context.Context, id int64) (*ent.Alert, *sub.RuleResult, error) {
+	alert, err := i.dal.GetAlertByID(ctx, id)
+	if err != nil {
+		return nil, nil, err
+	}
+	ruleResult, err := i.evaluatesRule(ctx, alert.Rule)
+	if err != nil {
+		return nil, nil, err
+	}
+	return alert, ruleResult, nil
 }

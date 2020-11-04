@@ -47,9 +47,8 @@ func (i *impl) connectDatasource(ctx context.Context, datasource *ent.Datasource
 	case sub.DatasourceTypeMySQL:
 		return datasource.Detail.Mysql.Connect(ctx)
 	case sub.DatasourceTypePrometheus:
-		// TODO(xiangxu)
+		return datasource.Detail.Prometheus.Connect(ctx)
 	}
-	return nil
 }
 
 func (_ *impl) evaluatesDatasource(ctx context.Context, datasource *ent.Datasource, script string) ([]*sub.DatasourceResult, error) {
@@ -58,5 +57,7 @@ func (_ *impl) evaluatesDatasource(ctx context.Context, datasource *ent.Datasour
 		return nil, fmt.Errorf("unknow type:%d", datasource.Type)
 	case sub.DatasourceTypeMySQL:
 		return datasource.Detail.Mysql.Evaluates(ctx, script)
+	case sub.DatasourceTypePrometheus:
+		return datasource.Detail.Prometheus.Evaluates(ctx, script)
 	}
 }
