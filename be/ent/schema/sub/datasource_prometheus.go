@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/echoturing/log"
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
@@ -73,7 +72,6 @@ func (p *PrometheusConfig) Evaluates(ctx context.Context, script string) ([]*Dat
 		0, 0, 0, 0, common.DefaultLoc)
 	v1api := v1.NewAPI(client)
 	script = wrapMetricsWithSumByInstance(script)
-	log.DebugWithContext(ctx, "eval script", "s", script)
 	value, _, err := v1api.QueryRange(ctx, wrapMetricsWithSumByInstance(script), v1.Range{
 		Start: startOfDay,
 		End:   time.Now(),

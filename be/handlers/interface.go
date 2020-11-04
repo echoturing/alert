@@ -12,6 +12,8 @@ type Interface interface {
 	UpdateAlert(context echo.Context) (interface{}, error)
 	GetAlertResult(context echo.Context) (interface{}, error)
 
+	GetAlertHistories(context echo.Context) (interface{}, error)
+
 	ListDatasource(context echo.Context) (interface{}, error)
 	CreateDatasource(context echo.Context) (interface{}, error)
 	UpdateDatasource(context echo.Context) (interface{}, error)

@@ -21,3 +21,8 @@ build:
 docker: build
 	@docker build .  -t docker-registry.shmiao.net/open-source/alert:latest
 	@docker push docker-registry.shmiao.net/open-source/alert:latest
+
+
+.PHONY: ge
+ge:
+	@go generate ./ent

@@ -176,6 +176,7 @@ func (i *impl) StartAlert(ctx context.Context, alert *ent.Alert) error {
 				log.ErrorWithContext(ctx, "evaluate error", "err", err.Error())
 				continue
 			}
+
 			current := ruleResultToAlertState(ruleResult, alert)
 			prev := alert.State
 			if current != prev {
@@ -189,8 +190,19 @@ func (i *impl) StartAlert(ctx context.Context, alert *ent.Alert) error {
 			log.DebugWithContext(ctx, "eval rule", "result", ruleResult, "alert", alert.ID, "status", alert.Status, "state", alert.State)
 			// always alert when state is alerting
 			if alert.State == schema.AlertStateAlerting {
+				_, err := i.dal.CreateAlertHistory(ctx, &ent.AlertHistory{
+					AlertID:   alert.ID,
+					AlertName: alert.Name,
+					Detail: sub.AlertHistoryDetail{
+						Rule:       &alert.Rule,
+						RuleResult: ruleResult,
+					},
+				})
+				if err != nil {
+					log.ErrorWithContext(ctx, "create alert history error", "err", err.Error())
+					continue
+				}
 				for _, channelID := range alert.Channels {
-
 					channel, err := i.dal.GetChannelByID(ctx, channelID)
 					if err != nil {
 						log.ErrorWithContext(ctx, "get channel by id error", "err", err.Error())

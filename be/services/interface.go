@@ -20,6 +20,8 @@ type Interface interface {
 	CreateChannel(ctx context.Context, channel *ent.Channel) (*ent.Channel, error)
 	UpdateChannel(ctx context.Context, id int64, update *UpdateChannelRequest) (*ent.Channel, error)
 
+	ListAlertHistories(ctx context.Context, limit, offset int) ([]*ent.AlertHistory, error)
+
 	CreateDatasource(ctx context.Context, datasource *ent.Datasource) (*ent.Datasource, error)
 	ListDatasource(ctx context.Context) ([]*ent.Datasource, error)
 	UpdateDatasource(ctx context.Context, id int64, update *UpdateDatasourceRequest) (*ent.Datasource, error)

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/echoturing/alert/ent/alert"
+	"github.com/echoturing/alert/ent/alerthistory"
 	"github.com/echoturing/alert/ent/channel"
 	"github.com/echoturing/alert/ent/datasource"
 	"github.com/echoturing/alert/ent/schema"
@@ -27,6 +28,18 @@ func init() {
 	alert.DefaultUpdatedAt = alertDescUpdatedAt.Default.(func() time.Time)
 	// alert.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
 	alert.UpdateDefaultUpdatedAt = alertDescUpdatedAt.UpdateDefault.(func() time.Time)
+	alerthistoryFields := schema.AlertHistory{}.Fields()
+	_ = alerthistoryFields
+	// alerthistoryDescCreatedAt is the schema descriptor for createdAt field.
+	alerthistoryDescCreatedAt := alerthistoryFields[4].Descriptor()
+	// alerthistory.DefaultCreatedAt holds the default value on creation for the createdAt field.
+	alerthistory.DefaultCreatedAt = alerthistoryDescCreatedAt.Default.(func() time.Time)
+	// alerthistoryDescUpdatedAt is the schema descriptor for updatedAt field.
+	alerthistoryDescUpdatedAt := alerthistoryFields[5].Descriptor()
+	// alerthistory.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
+	alerthistory.DefaultUpdatedAt = alerthistoryDescUpdatedAt.Default.(func() time.Time)
+	// alerthistory.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
+	alerthistory.UpdateDefaultUpdatedAt = alerthistoryDescUpdatedAt.UpdateDefault.(func() time.Time)
 	channelFields := schema.Channel{}.Fields()
 	_ = channelFields
 	// channelDescCreatedAt is the schema descriptor for createdAt field.

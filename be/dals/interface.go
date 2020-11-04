@@ -23,6 +23,9 @@ type Interface interface {
 	ListChannels(ctx context.Context) ([]*ent.Channel, error)
 	UpdateChannel(ctx context.Context, id int64, channel *ent.Channel) (*ent.Channel, error)
 	CreateChannel(ctx context.Context, channel *ent.Channel) (*ent.Channel, error)
+
+	CreateAlertHistory(ctx context.Context, history *ent.AlertHistory) (*ent.AlertHistory, error)
+	ListAlertHistory(ctx context.Context, limit, offset int) ([]*ent.AlertHistory, error)
 }
 
 type impl struct {

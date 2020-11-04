@@ -10,6 +10,7 @@ import (
 	"github.com/echoturing/alert/ent/migrate"
 
 	"github.com/echoturing/alert/ent/alert"
+	"github.com/echoturing/alert/ent/alerthistory"
 	"github.com/echoturing/alert/ent/channel"
 	"github.com/echoturing/alert/ent/datasource"
 
@@ -24,6 +25,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// Alert is the client for interacting with the Alert builders.
 	Alert *AlertClient
+	// AlertHistory is the client for interacting with the AlertHistory builders.
+	AlertHistory *AlertHistoryClient
 	// Channel is the client for interacting with the Channel builders.
 	Channel *ChannelClient
 	// Datasource is the client for interacting with the Datasource builders.
@@ -42,6 +45,7 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Alert = NewAlertClient(c.config)
+	c.AlertHistory = NewAlertHistoryClient(c.config)
 	c.Channel = NewChannelClient(c.config)
 	c.Datasource = NewDatasourceClient(c.config)
 }
@@ -74,11 +78,12 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	}
 	cfg := config{driver: tx, log: c.log, debug: c.debug, hooks: c.hooks}
 	return &Tx{
-		ctx:        ctx,
-		config:     cfg,
-		Alert:      NewAlertClient(cfg),
-		Channel:    NewChannelClient(cfg),
-		Datasource: NewDatasourceClient(cfg),
+		ctx:          ctx,
+		config:       cfg,
+		Alert:        NewAlertClient(cfg),
+		AlertHistory: NewAlertHistoryClient(cfg),
+		Channel:      NewChannelClient(cfg),
+		Datasource:   NewDatasourceClient(cfg),
 	}, nil
 }
 
@@ -93,10 +98,11 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	}
 	cfg := config{driver: &txDriver{tx: tx, drv: c.driver}, log: c.log, debug: c.debug, hooks: c.hooks}
 	return &Tx{
-		config:     cfg,
-		Alert:      NewAlertClient(cfg),
-		Channel:    NewChannelClient(cfg),
-		Datasource: NewDatasourceClient(cfg),
+		config:       cfg,
+		Alert:        NewAlertClient(cfg),
+		AlertHistory: NewAlertHistoryClient(cfg),
+		Channel:      NewChannelClient(cfg),
+		Datasource:   NewDatasourceClient(cfg),
 	}, nil
 }
 
@@ -126,6 +132,7 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.Alert.Use(hooks...)
+	c.AlertHistory.Use(hooks...)
 	c.Channel.Use(hooks...)
 	c.Datasource.Use(hooks...)
 }
@@ -216,6 +223,94 @@ func (c *AlertClient) GetX(ctx context.Context, id int64) *Alert {
 // Hooks returns the client hooks.
 func (c *AlertClient) Hooks() []Hook {
 	return c.hooks.Alert
+}
+
+// AlertHistoryClient is a client for the AlertHistory schema.
+type AlertHistoryClient struct {
+	config
+}
+
+// NewAlertHistoryClient returns a client for the AlertHistory from the given config.
+func NewAlertHistoryClient(c config) *AlertHistoryClient {
+	return &AlertHistoryClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `alerthistory.Hooks(f(g(h())))`.
+func (c *AlertHistoryClient) Use(hooks ...Hook) {
+	c.hooks.AlertHistory = append(c.hooks.AlertHistory, hooks...)
+}
+
+// Create returns a create builder for AlertHistory.
+func (c *AlertHistoryClient) Create() *AlertHistoryCreate {
+	mutation := newAlertHistoryMutation(c.config, OpCreate)
+	return &AlertHistoryCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// BulkCreate returns a builder for creating a bulk of AlertHistory entities.
+func (c *AlertHistoryClient) CreateBulk(builders ...*AlertHistoryCreate) *AlertHistoryCreateBulk {
+	return &AlertHistoryCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AlertHistory.
+func (c *AlertHistoryClient) Update() *AlertHistoryUpdate {
+	mutation := newAlertHistoryMutation(c.config, OpUpdate)
+	return &AlertHistoryUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AlertHistoryClient) UpdateOne(ah *AlertHistory) *AlertHistoryUpdateOne {
+	mutation := newAlertHistoryMutation(c.config, OpUpdateOne, withAlertHistory(ah))
+	return &AlertHistoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AlertHistoryClient) UpdateOneID(id int64) *AlertHistoryUpdateOne {
+	mutation := newAlertHistoryMutation(c.config, OpUpdateOne, withAlertHistoryID(id))
+	return &AlertHistoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AlertHistory.
+func (c *AlertHistoryClient) Delete() *AlertHistoryDelete {
+	mutation := newAlertHistoryMutation(c.config, OpDelete)
+	return &AlertHistoryDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *AlertHistoryClient) DeleteOne(ah *AlertHistory) *AlertHistoryDeleteOne {
+	return c.DeleteOneID(ah.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *AlertHistoryClient) DeleteOneID(id int64) *AlertHistoryDeleteOne {
+	builder := c.Delete().Where(alerthistory.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AlertHistoryDeleteOne{builder}
+}
+
+// Query returns a query builder for AlertHistory.
+func (c *AlertHistoryClient) Query() *AlertHistoryQuery {
+	return &AlertHistoryQuery{config: c.config}
+}
+
+// Get returns a AlertHistory entity by its id.
+func (c *AlertHistoryClient) Get(ctx context.Context, id int64) (*AlertHistory, error) {
+	return c.Query().Where(alerthistory.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AlertHistoryClient) GetX(ctx context.Context, id int64) *AlertHistory {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *AlertHistoryClient) Hooks() []Hook {
+	return c.hooks.AlertHistory
 }
 
 // ChannelClient is a client for the Channel schema.

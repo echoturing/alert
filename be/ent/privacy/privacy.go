@@ -234,6 +234,30 @@ func (f AlertMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation)
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.AlertMutation", m)
 }
 
+// The AlertHistoryQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type AlertHistoryQueryRuleFunc func(context.Context, *ent.AlertHistoryQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f AlertHistoryQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.AlertHistoryQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.AlertHistoryQuery", q)
+}
+
+// The AlertHistoryMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type AlertHistoryMutationRuleFunc func(context.Context, *ent.AlertHistoryMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f AlertHistoryMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.AlertHistoryMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.AlertHistoryMutation", m)
+}
+
 // The ChannelQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type ChannelQueryRuleFunc func(context.Context, *ent.ChannelQuery) error

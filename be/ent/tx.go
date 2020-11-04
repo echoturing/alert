@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Alert is the client for interacting with the Alert builders.
 	Alert *AlertClient
+	// AlertHistory is the client for interacting with the AlertHistory builders.
+	AlertHistory *AlertHistoryClient
 	// Channel is the client for interacting with the Channel builders.
 	Channel *ChannelClient
 	// Datasource is the client for interacting with the Datasource builders.
@@ -154,6 +156,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Alert = NewAlertClient(tx.config)
+	tx.AlertHistory = NewAlertHistoryClient(tx.config)
 	tx.Channel = NewChannelClient(tx.config)
 	tx.Datasource = NewDatasourceClient(tx.config)
 }

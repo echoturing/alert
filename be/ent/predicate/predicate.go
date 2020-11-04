@@ -9,6 +9,9 @@ import (
 // Alert is the predicate function for alert builders.
 type Alert func(*sql.Selector)
 
+// AlertHistory is the predicate function for alerthistory builders.
+type AlertHistory func(*sql.Selector)
+
 // Channel is the predicate function for channel builders.
 type Channel func(*sql.Selector)
 

@@ -22,6 +22,19 @@ func (f AlertFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error
 	return f(ctx, mv)
 }
 
+// The AlertHistoryFunc type is an adapter to allow the use of ordinary
+// function as AlertHistory mutator.
+type AlertHistoryFunc func(context.Context, *ent.AlertHistoryMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AlertHistoryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.AlertHistoryMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AlertHistoryMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The ChannelFunc type is an adapter to allow the use of ordinary
 // function as Channel mutator.
 type ChannelFunc func(context.Context, *ent.ChannelMutation) (ent.Value, error)
