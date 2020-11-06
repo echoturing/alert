@@ -92,6 +92,10 @@ func (i *impl) StartAllAlert(ctx context.Context) error {
 	return nil
 }
 
+func (i *impl) TestRule(ctx context.Context, alert *ent.Alert) (*sub.RuleResult, error) {
+	return i.evaluatesRule(ctx, alert.Rule)
+}
+
 func (i *impl) evaluatesRule(ctx context.Context, rule sub.Rule) (*sub.RuleResult, error) {
 	var (
 		final sub.RuleResult
@@ -216,6 +220,7 @@ func (i *impl) StartAlert(ctx context.Context, alert *ent.Alert) error {
 				}
 			}
 		}
+		log.DebugWithContext(ctx, "alert stopped", "alert", alert.ID)
 	}()
 	return nil
 }

@@ -27,6 +27,7 @@ func Route(host string, port int, handler handlers.Interface, serviceName string
 	apiV1.POST("/alerts", middlewaretools.HandlerFuncWrapper(handler.CreateAlert))
 	apiV1.PUT("/alerts/:id", middlewaretools.HandlerFuncWrapper(handler.UpdateAlert))
 	apiV1.GET("/alerts/:id/result", middlewaretools.HandlerFuncWrapper(handler.GetAlertResult))
+	apiV1.GET("/alerts/test", middlewaretools.HandlerFuncWrapper(handler.TestAlert))
 
 	apiV1.GET("/alert_histories", middlewaretools.HandlerFuncWrapper(handler.GetAlertHistories))
 

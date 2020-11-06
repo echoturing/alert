@@ -31,21 +31,20 @@ func (p *PrometheusConfig) Connect(ctx context.Context) error {
 // calcAccumulator values sorted in time order
 // and Prometheus Counter be reset to zero when service restart
 // so we calc the accumulator to find every restart
-func calcAccumulator(values []model.SamplePair) float64 {
+func calcAccumulator(ctx context.Context, values []model.SamplePair) float64 {
 	var total float64
 	prev := values[0]
 	for i := 1; i < len(values); i++ {
 		current := values[i]
 		accumulator := float64(current.Value - prev.Value)
 		// real accumulated
-		if accumulator > 0 {
+		if accumulator >= 0 {
 			total += accumulator
-			prev = current
 		} else {
 			// service restart,so we should add all init value
 			total += float64(current.Value)
-			prev = current
 		}
+		prev = current
 	}
 	return total
 }
@@ -94,7 +93,7 @@ func (p *PrometheusConfig) Evaluates(ctx context.Context, script string) ([]*Dat
 		for _, instance := range matrix {
 			length := len(instance.Values)
 			if length >= 2 { // we use first.val - last.val,so we should only care about length>=2
-				dsr.ValueNumeric += calcAccumulator(instance.Values)
+				dsr.ValueNumeric += calcAccumulator(ctx, instance.Values)
 			}
 		}
 		result = append(result, dsr)

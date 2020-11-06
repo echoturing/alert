@@ -106,3 +106,14 @@ func (i *impl) GetAlertResult(c echo.Context) (interface{}, error) {
 	}
 	return resp, nil
 }
+
+func (i *impl) TestAlert(c echo.Context) (interface{}, error) {
+	ctx := c.Request().Context()
+	req := &CreateAlertRequest{}
+	if err := c.Bind(req); err != nil {
+		return nil, err
+	}
+	return i.service.TestRule(ctx, &ent.Alert{
+		Rule: *req.Rule,
+	})
+}
